@@ -1,0 +1,17 @@
+# ninja log v7
+5	1026	1764032142969617823	CMakeFiles/MyProject.dir/src/main.cpp.o	5b7fee3e1270baf6
+1027	1185	1764032143991330381	MyProject	8c4f639bbb13bfb
+2	536	1764032493473801501	CMakeFiles/MyProject.dir/src/main.cpp.o	5b7fee3e1270baf6
+536	610	1764032494007549904	MyProject	8c4f639bbb13bfb
+2	524	1764032499791728348	CMakeFiles/MyProject.dir/src/main.cpp.o	5b7fee3e1270baf6
+524	591	1764032500313043812	MyProject	8c4f639bbb13bfb
+2	492	1764032507597835745	CMakeFiles/MyProject.dir/src/main.cpp.o	5b7fee3e1270baf6
+492	567	1764032508086995361	MyProject	8c4f639bbb13bfb
+4	507	1764032515877159897	CMakeFiles/MyProject.dir/src/main.cpp.o	5b7fee3e1270baf6
+508	586	1764032516380982246	MyProject	8c4f639bbb13bfb
+2	521	1764032523332046149	CMakeFiles/MyProject.dir/src/main.cpp.o	5b7fee3e1270baf6
+521	589	1764032523850547343	MyProject	8c4f639bbb13bfb
+3	500	1764032529701795736	CMakeFiles/MyProject.dir/src/main.cpp.o	5b7fee3e1270baf6
+500	576	1764032530198388764	MyProject	8c4f639bbb13bfb
+2	626	1764032547047993061	CMakeFiles/MyProject.dir/src/main.cpp.o	5b7fee3e1270baf6
+626	695	1764032547670822924	MyProject	8c4f639bbb13bfb
