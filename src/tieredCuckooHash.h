@@ -4,8 +4,8 @@
 #include <iostream>
 #include <vector>
 
-#define kickFirst false
-#define maxTableSize 1000000
+#define kickFirst true
+#define maxTableSize 10000000
 
 template <
 	class Key,
@@ -13,10 +13,10 @@ template <
 	class Hash = std::hash<Key>,
     class KeyEqual = std::equal_to<Key>,
     class Allocator = std::allocator<std::pair<const Key, T>>,
-	std::size_t MaxLoopCountScale = 8,
-	std::size_t BinSize = 10,
-	std::size_t InitialTierSize = 1024,
-	std::size_t TierGrowthFactor = 2
+	std::size_t MaxLoopCountScale = 4096,
+	std::size_t BinSize = 16,
+	std::size_t InitialTierSize = 1000,
+	std::size_t TierGrowthFactor = 4
 >
 class TieredCuckooHash {
 public:
@@ -86,7 +86,7 @@ public:
 	const_pointer cend() const { return const_iterator(this, 0, 0, 0); }
 
 	// Capacity
-	bool empty() const { return tiers.empty(); }
+	bool empty() const { return kvCount == 0; }
 	size_type size() const { return kvCount; }
 
 	// Modifiers
@@ -260,7 +260,6 @@ private:
 			base *= base;
 		}
 		// add tier
-
 		tiers.push_back(Tier{std::vector<Bin>(InitialTierSize*result), 0});
 	}
 
