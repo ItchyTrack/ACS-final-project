@@ -19,6 +19,7 @@ int main() {
 		auto start = std::chrono::high_resolution_clock::now();
 		for (unsigned int i = 0; i < 20; i++) {
 			std::unordered_map<unsigned int, unsigned int> stdHashMap;
+			stdHashMap.rehash(1024);
 			for (unsigned int i = 0; i < 1000000; i++) {
 				stdHashMap.insert({rand(), rand()});
 			}
