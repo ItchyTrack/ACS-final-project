@@ -2,7 +2,13 @@
 #define tieredCuckooHash_h
 
 #include <iostream>
-#include <vector>
+#include <array>
+#include <optional>
+#include <limits>
+#include <functional>
+#include <utility>
+#include <type_traits>
+#include <stdexcept>
 
 #define kickFirst true
 #define maxTableSize 10000000
@@ -12,7 +18,7 @@ template <
 	class T,
 	class Hash = std::hash<Key>,
     class KeyEqual = std::equal_to<Key>,
-    class Allocator = std::allocator<std::pair<const Key, T>>,
+    class Allocator = std::allocator<std::pair<const Key, T>>, // no used, idk how it works
 	std::size_t MaxLoopCountScale = 4096,
 	std::size_t BinSize = 16,
 	std::size_t InitialTierSize = 1000,
@@ -37,7 +43,7 @@ private:
 public:
 	struct Bin {
 		std::array<std::optional<mut_value_type>, BinSize> kvPairs;
-		std::size_t size;
+		std::size_t size = 0;
 	};
 	struct Tier {
 		std::vector<Bin> table;
@@ -48,6 +54,15 @@ public:
 	public:
 		reference operator*() const { return (reference)tieredCuckooHash->tiers[tierIndex].table[binIndex].kvPairs[kvPairIndex].value(); }
 		pointer operator->() const { return std::pointer_traits<pointer>::pointer_to(operator*()); }
+
+		bool operator==(const iterator& o) const {
+			return tieredCuckooHash == o.tieredCuckooHash &&
+				tierIndex == o.tierIndex &&
+				binIndex == o.binIndex &&
+				kvPairIndex == o.kvPairIndex;
+		}
+		bool operator!=(const iterator& o) const { return !(*this==o); }
+
 	private:
 		iterator(
 			TieredCuckooHash* tieredCuckooHash, std::size_t tierIndex, std::size_t binIndex, std::size_t kvPairIndex
@@ -63,6 +78,15 @@ public:
 	public:
 		reference operator*() const { return tieredCuckooHash->tiers[tierIndex][binIndex].kvPairs[kvPairIndex]; }
 		pointer operator->() const { return std::pointer_traits<pointer>::pointer_to(operator*()); }
+
+		bool operator==(const iterator& o) const {
+			return tieredCuckooHash == o.tieredCuckooHash &&
+				tierIndex == o.tierIndex &&
+				binIndex == o.binIndex &&
+				kvPairIndex == o.kvPairIndex;
+		}
+		bool operator!=(const iterator& o) const { return !(*this==o); }
+
 	private:
 		const_iterator(
 			const TieredCuckooHash* tieredCuckooHash, std::size_t tierIndex, std::size_t binIndex, std::size_t kvPairIndex
@@ -88,10 +112,11 @@ public:
 	// Capacity
 	bool empty() const { return kvCount == 0; }
 	size_type size() const { return kvCount; }
+	size_type max_size() const { return std::numeric_limits<difference_type>::max()/2; } // should be fine
 
 	// Modifiers
 	void clear() { tiers.clear(); }
-	// ------------------------------ std::pair<iterator, bool> insert(const value_type& value) ------------------------------
+	// ------------------------------ insert(const value_type& value) ------------------------------
 	std::pair<iterator, bool> insert(const value_type& value) {
 		std::size_t hash = hasher{}(value.first);
 		if (tiers.size() == 0) {
@@ -110,8 +135,8 @@ public:
 		}
 		// add it otherwise
 		++kvCount;
-		Tier tier = tiers[0];
-		std::size_t binIndex = hash % tier.size();
+		Tier& tier = tiers[0];
+		std::size_t binIndex = hash % tier.table.size();
 		Bin& bin = tier[binIndex];
 		if (bin.size < bin.kvPairs.size()) {
 			bin.kvPairs[bin.size] = value;
@@ -128,7 +153,7 @@ public:
 		insertNonExistingKey(std::move(otherValue), 1);
 		return {iterator(this, 0, binIndex, kickIndex), true};
 	}
-	// ------------------------------ std::pair<iterator, bool> insert(value_type&& value) ------------------------------
+	// ------------------------------ insert(value_type&& value) ------------------------------
 	std::pair<iterator, bool> insert(value_type&& value) {
 		std::size_t hash = hasher{}(value.first);
 		if (tiers.size() == 0) {
@@ -165,7 +190,78 @@ public:
 		insertNonExistingKey(std::move(otherValue), 1);
 		return {iterator(this, 0, binIndex, kickIndex), true};
 	}
-	// ------------------------------ iterator find(const Key& key) ------------------------------
+	// ------------------------------ insert_or_assign(const Key& k, M&& obj) ------------------------------
+	template <class M>
+	std::pair<iterator, bool> insert_or_assign(const Key& key, M&& obj) {
+		std::pair<iterator, bool> pair = emplace_key_and_args(key, std::forward<M>(obj));
+		if (!pair.second) {
+			pair.first.second =  std::forward<M>(obj);
+		}
+		return pair;
+	}
+	// ------------------------------ insert_or_assign(Key&& k, M&& obj) ------------------------------
+	template <class M>
+	std::pair<iterator, bool> insert_or_assign(Key&& key, M&& obj) {
+		std::pair<iterator, bool> pair = emplace_key_and_args(std::move(key), std::forward<M>(obj));
+		if (!pair.second) {
+			pair.first.second =  std::forward<M>(obj);
+		}
+		return pair;
+	}
+	// ------------------------------ insert_or_assign(const_iterator, const Key& k, M&& obj) ------------------------------
+	template <class M>
+	iterator insert_or_assign(const_iterator, const Key& key, M&& obj) {
+		return insert_or_assign(key, std::forward<M>(obj)).first;
+	}
+	// ------------------------------ insert_or_assign(const_iterator, Key&& k, M&& obj) ------------------------------
+	template <class M>
+	iterator insert_or_assign(const_iterator, Key&& key, M&& obj) {
+		return insert_or_assign(std::move(key), std::forward<M>(obj)).first;
+	}
+	// ------------------------------ emplace(Args&&... args) ------------------------------
+	template<class... Args>
+	std::pair<iterator, bool> emplace(Args&&... args) {
+		return emplace_key_in_args(std::forward(args)...);
+	}
+	// ------------------------------ emplace_hint(const_iterator, Args&&... args) ------------------------------
+	template<class... Args>
+	iterator emplace_hint(const_iterator, Args&&... args) {
+		return emplace(std::forward(args)...).first;
+	}
+	// ------------------------------ try_emplace(const Key& k, Args&&... args) ------------------------------
+	template<class... Args>
+	std::pair<iterator, bool> try_emplace(const Key& key, Args&&... args) {
+		return emplace_key_and_args(key, std::forward(args)...);
+	}
+	// ------------------------------ try_emplace(const_iterator, const Key& k, Args&&... args) ------------------------------
+	template<class... Args>
+	iterator try_emplace(const_iterator, const Key& key, Args&&... args) {
+		return try_emplace(key, std::forward(args)...).first;
+	}
+	// Lookup
+	// ------------------------------ at(const Key& key) ------------------------------
+	T& at(const Key& key) {
+		iterator iter = find(key);
+		if (iter == end())
+			throw std::out_of_range("TieredCuckooHash::at: key not found");
+		return iter->second;
+	}
+	// ------------------------------ at(const Key& key) const ------------------------------
+	const T& at(const Key& key) const {
+		const_iterator iter = find(key);
+		if (iter == end())
+			throw std::out_of_range("TieredCuckooHash::at: key not found");
+		return iter->second;
+	}
+	// ------------------------------ operator[]( const Key& key ) ------------------------------
+	T& operator[]( const Key& key ) {
+		return insert({key, allocator_type{}()}).first.second;
+	}
+	// ------------------------------ operator[]( Key&& key ) ------------------------------
+	T& operator[]( Key&& key ) {
+		return insert({key, allocator_type{}()}).first.second;
+	}
+	// ------------------------------ find(const Key& key) ------------------------------
 	iterator find(const Key& key) {
 		std::size_t hash = hasher{}(key);
 		for (std::size_t tierIndex = 0; tierIndex < tiers.size(); ++tierIndex) {
@@ -179,7 +275,7 @@ public:
 		}
 		return end();
 	}
-	// ------------------------------ iterator find(const Key& key) ------------------------------
+	// ------------------------------ find(const Key& key) const ------------------------------
 	const_iterator find(const Key& key) const {
 		std::size_t hash = hasher{}(key);
 		for (std::size_t tierIndex = 0; tierIndex < tiers.size(); ++tierIndex) {
@@ -212,6 +308,50 @@ public:
 	}
 
 private:
+	// might contain key
+	template<class A0, class... Args>
+	std::pair<iterator, bool> emplace_key_in_args(A0&& a0, Args&&... args) {
+		return emplace_key_and_args(static_cast<const Key&>(a0), std::forward<Args>(args)...);
+	}
+	template<class... Args>
+	std::pair<iterator, bool> emplace_key_and_args(const Key& key, Args&&... args) {
+		std::size_t hash = hasher{}(key);
+		if (tiers.size() == 0) {
+			addTier();
+		} else { // if there were no tiers it cant be in one
+			// check if the key is in the map
+			for (std::size_t tierIndex = 0; tierIndex < tiers.size(); ++tierIndex) {
+				std::size_t binIndex = hash % tiers[tierIndex].table.size();
+				const Bin& bin = tiers[tierIndex].table[binIndex];
+				for (std::size_t kvPairIndex = 0; kvPairIndex < bin.size; ++kvPairIndex) {
+					if (key_equal{}(key, bin.kvPairs[kvPairIndex]->first)) {
+						return {iterator(this, tierIndex, binIndex, kvPairIndex), false};
+					}
+				}
+			}
+		}
+		// add it otherwise
+		++kvCount;
+		Tier& tier = tiers[0];
+		std::size_t binIndex = hash % tier.table.size();
+		Bin& bin = tier[binIndex];
+		if (bin.size < bin.kvPairs.size()) {
+			bin.kvPairs[bin.size].emplace(key, std::forward(args)...);
+			++tier.kvCount;
+			return {iterator(this, 0, binIndex, bin.size++), true};
+		}
+#if (kickFirst)
+		std::size_t kickIndex = 0;
+#else
+		std::size_t kickIndex = hash % bin.size;
+#endif
+		mut_value_type otherValue = std::move(bin.kvPairs[kickIndex].value());
+		bin.kvPairs[kickIndex].reset();
+		bin.kvPairs[kickIndex].emplace(key, std::forward(args)...);
+		insertNonExistingKey(std::move(otherValue), 1);
+		return {iterator(this, 0, binIndex, kickIndex), true};
+	}
+	// does not contain key
 	iterator insertNonExistingKey(mut_value_type&& value, std::size_t tierIndex, std::size_t loopCount = 0) {
 		if (loopCount > MaxLoopCountScale * tiers.size()) {
 			addTier();
