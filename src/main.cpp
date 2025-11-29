@@ -31,7 +31,6 @@ int test() {
     for (int i = 0; i < iterations; ++i) {
         int key = keyDist(rng);
         std::string val = randomString();
-
         if (i % 2 == 0) {
             cuckooMap.insert_or_assign(key, val);
             stdMap.insert_or_assign(key, val);
@@ -211,7 +210,7 @@ void speedTest() {
 
 
 int main() {
-	test();
-	// speedTest();
+	// test();
+	speedTest();
 	return 0;
 }

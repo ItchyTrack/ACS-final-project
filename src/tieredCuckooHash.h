@@ -36,24 +36,38 @@ public:
 	typedef Allocator													allocator_type;
 	typedef value_type&													reference;
 	typedef const value_type&											const_reference;
-	typedef typename std::allocator_traits<Allocator>::pointer			pointer;
-	typedef typename std::allocator_traits<Allocator>::const_pointer	const_pointer;
+	typedef value_type*													pointer;
+	typedef const value_type*											const_pointer;
+	// typedef typename std::allocator_traits<Allocator>::pointer			pointer;
+	// typedef typename std::allocator_traits<Allocator>::const_pointer	const_pointer;
 private:
-	typedef std::pair<Key, T>										mut_value_type;
+	typedef std::pair<const Key, T>										mut_value_type;
 public:
 	struct Bin {
-		std::array<std::optional<mut_value_type>, BinSize> kvPairs;
+		template<class... Args>
+		void emplace(size_t index, Args&&... args) { ::new(&kvPairs[index]) mut_value_type(std::forward<Args>(args)...); }
+		void destroy(size_t index) { std::launder(reinterpret_cast<mut_value_type*>(&kvPairs[index]))->~mut_value_type(); }
+		mut_value_type& get(size_t index) { return *std::launder(reinterpret_cast<mut_value_type*>(&kvPairs[index])); }
+		const mut_value_type& get(size_t index) const { return *std::launder(reinterpret_cast<const mut_value_type*>(&kvPairs[index])); }
+		inline mut_value_type getMove(size_t index) {
+			auto* p = std::launder(reinterpret_cast<mut_value_type*>(&kvPairs[index]));
+			mut_value_type tmp = std::move(*p);
+			destroy(index);
+			return tmp;
+		}
+		std::array<std::aligned_storage_t<sizeof(mut_value_type), alignof(mut_value_type)>, BinSize> kvPairs;
 		std::size_t kvCount = 0;
 	};
 	struct Tier {
 		std::vector<Bin> table;
-		size_t kvCount;
+		size_t kvCount = 0;
 	};
 	class iterator {
 		friend TieredCuckooHash;
 	public:
-		reference operator*() const { return (reference)tieredCuckooHash->tiers[tierIndex].table[binIndex].kvPairs[kvPairIndex].value(); }
-		pointer operator->() const { return std::pointer_traits<pointer>::pointer_to(operator*()); }
+		reference operator*() const { return tieredCuckooHash->tiers[tierIndex].table[binIndex].get(kvPairIndex); }
+		pointer operator->() const { return std::addressof(operator*()); }
+		// pointer operator->() const { return std::pointer_traits<pointer>::pointer_to(operator*()); }
 
 		bool operator==(const iterator& o) const {
 			return tieredCuckooHash == o.tieredCuckooHash &&
@@ -138,8 +152,9 @@ public:
 	class const_iterator {
 		friend TieredCuckooHash;
 	public:
-		const_reference operator*() const { return (const_reference)tieredCuckooHash->tiers[tierIndex].table[binIndex].kvPairs[kvPairIndex]; }
-		const_pointer operator->() const { return std::pointer_traits<pointer>::pointer_to(operator*()); }
+		const_reference operator*() const { return tieredCuckooHash->tiers[tierIndex].table[binIndex].get(kvPairIndex); }
+		pointer operator->() const { return std::addressof(operator*()); }
+		// const_pointer operator->() const { return std::pointer_traits<pointer>::pointer_to(operator*()); }
 
 		bool operator==(const const_iterator& o) const {
 			return tieredCuckooHash == o.tieredCuckooHash &&
@@ -255,7 +270,7 @@ public:
 	size_type max_size() const { return std::numeric_limits<difference_type>::max()/2; } // should be fine
 
 	// Modifiers
-	void clear() { tiers.clear(); }
+	void clear() { tiers.clear(); kvCount = 0; }
 	// ------------------------------ insert(const value_type& value) ------------------------------
 	std::pair<iterator, bool> insert(const value_type& value) {
 		std::size_t hash = hasher{}(value.first);
@@ -267,7 +282,7 @@ public:
 				std::size_t binIndex = hash % tiers[tierIndex].table.size();
 				const Bin& bin = tiers[tierIndex].table[binIndex];
 				for (std::size_t kvPairIndex = 0; kvPairIndex < bin.kvCount; ++kvPairIndex) {
-					if (key_equal{}(value.first, bin.kvPairs[kvPairIndex]->first)) {
+					if (key_equal{}(value.first, bin.get(kvPairIndex).first)) {
 						return {iterator(this, tierIndex, binIndex, kvPairIndex), false};
 					}
 				}
@@ -279,7 +294,7 @@ public:
 		std::size_t binIndex = hash % tier.table.size();
 		Bin& bin = tier.table[binIndex];
 		if (bin.kvCount < bin.kvPairs.size()) {
-			bin.kvPairs[bin.kvCount] = value;
+			bin.emplace(bin.kvCount, value);
 			++tier.kvCount;
 			return {iterator(this, 0, binIndex, bin.kvCount++), true};
 		}
@@ -288,8 +303,8 @@ public:
 #else
 		std::size_t kickIndex = hash % bin.kvCount;
 #endif
-		mut_value_type otherValue = std::move(bin.kvPairs[kickIndex].value());
-		bin.kvPairs[kickIndex] = value;
+		mut_value_type otherValue = bin.getMove(kickIndex);
+		bin.emplace(kickIndex, value);
 		insertNonExistingKey(std::move(otherValue), 1);
 		return {iterator(this, 0, binIndex, kickIndex), true};
 	}
@@ -304,7 +319,7 @@ public:
 				std::size_t binIndex = hash % tiers[tierIndex].table.size();
 				const Bin& bin = tiers[tierIndex].table[binIndex];
 				for (std::size_t kvPairIndex = 0; kvPairIndex < bin.kvCount; ++kvPairIndex) {
-					if (key_equal{}(value.first, bin.kvPairs[kvPairIndex]->first)) {
+					if (key_equal{}(value.first, bin.get(kvPairIndex).first)) {
 						return {iterator(this, tierIndex, binIndex, kvPairIndex), false};
 					}
 				}
@@ -316,7 +331,7 @@ public:
 		std::size_t binIndex = hash % tier.table.size();
 		Bin& bin = tier.table[binIndex];
 		if (bin.kvCount < bin.kvPairs.size()) {
-			bin.kvPairs[bin.kvCount] = value;
+			bin.emplace(bin.kvCount, value);
 			++tier.kvCount;
 			return {iterator(this, 0, binIndex, bin.kvCount++), true};
 		}
@@ -325,8 +340,8 @@ public:
 #else
 		std::size_t kickIndex = hash % bin.kvCount;
 #endif
-		mut_value_type otherValue = std::move(bin.kvPairs[kickIndex].value());
-		bin.kvPairs[kickIndex] = std::move(value);
+		mut_value_type otherValue = bin.getMove(kickIndex);
+		bin.emplace(kickIndex, std::move(value));
 		insertNonExistingKey(std::move(otherValue), 1);
 		return {iterator(this, 0, binIndex, kickIndex), true};
 	}
@@ -408,7 +423,7 @@ public:
 			std::size_t binIndex = hash % tiers[tierIndex].table.size();
 			const Bin& bin = tiers[tierIndex].table[binIndex];
 			for (std::size_t kvPairIndex = 0; kvPairIndex < bin.kvCount; ++kvPairIndex) {
-				if (key_equal{}(key, bin.kvPairs[kvPairIndex]->first)) {
+				if (key_equal{}(key, bin.get(kvPairIndex).first)) {
 					return iterator(this, tierIndex, binIndex, kvPairIndex);
 				}
 			}
@@ -422,7 +437,7 @@ public:
 			std::size_t binIndex = hash % tiers[tierIndex].table.size();
 			const Bin& bin = tiers[tierIndex].table[binIndex];
 			for (std::size_t kvPairIndex = 0; kvPairIndex < bin.kvCount; ++kvPairIndex) {
-				if (key_equal{}(key, bin.kvPairs[kvPairIndex]->first)) {
+				if (key_equal{}(key, bin.get(kvPairIndex).first)) {
 					return const_iterator(this, tierIndex, binIndex, kvPairIndex);
 				}
 			}
@@ -437,8 +452,8 @@ public:
 				bool first = true;
 				for (std::size_t i = 0; i < bin.kvCount; ++i) {
 					if (!first) std::cout << ",";
-					const std::optional<mut_value_type>& value = bin.kvPairs[i];
-					std::cout << value.value().first << ":" << value.value().second;
+					const mut_value_type& value = bin.get(i);
+					std::cout << value.first << ":" << value.second;
 					first = false;
 				}
 				std::cout << "]";
@@ -464,7 +479,7 @@ private:
 				std::size_t binIndex = hash % tiers[tierIndex].table.size();
 				const Bin& bin = tiers[tierIndex].table[binIndex];
 				for (std::size_t kvPairIndex = 0; kvPairIndex < bin.kvCount; ++kvPairIndex) {
-					if (key_equal{}(key, bin.kvPairs[kvPairIndex]->first)) {
+					if (key_equal{}(key, bin.get(kvPairIndex).first)) {
 						return {iterator(this, tierIndex, binIndex, kvPairIndex), false};
 					}
 				}
@@ -476,7 +491,7 @@ private:
 		std::size_t binIndex = hash % tier.table.size();
 		Bin& bin = tier.table[binIndex];
 		if (bin.kvCount < bin.kvPairs.size()) {
-			bin.kvPairs[bin.kvCount].emplace(key, std::forward<Args>(args)...);
+			bin.emplace(bin.kvCount, key, std::forward<Args>(args)...);
 			++tier.kvCount;
 			return {iterator(this, 0, binIndex, bin.kvCount++), true};
 		}
@@ -485,9 +500,8 @@ private:
 #else
 		std::size_t kickIndex = hash % bin.kvCount;
 #endif
-		mut_value_type otherValue = std::move(bin.kvPairs[kickIndex].value());
-		bin.kvPairs[kickIndex].reset();
-		bin.kvPairs[kickIndex].emplace(key, std::forward<Args>(args)...);
+		mut_value_type otherValue = bin.getMove(kickIndex);
+		bin.emplace(kickIndex, key, std::forward<Args>(args)...);
 		insertNonExistingKey(std::move(otherValue), 1);
 		return {iterator(this, 0, binIndex, kickIndex), true};
 	}
@@ -503,7 +517,7 @@ private:
 			std::size_t hash = hasher{}(value.first);
 			std::size_t binIndex = hash % tier.table.size();
 			Bin& bin = tier.table[binIndex];
-			bin.kvPairs[0] = std::move(value);
+			bin.emplace(0, std::move(value));
 			return iterator(this, tiers.size()-1, binIndex, bin.kvCount++);
 		}
 		Tier& tier = tiers[tierIndex];
@@ -511,8 +525,8 @@ private:
 		std::size_t binIndex = hash % tier.table.size();
 		Bin& bin = tier.table[binIndex];
 		if (bin.kvCount < bin.kvPairs.size()) {
+			bin.emplace(bin.kvCount, std::move(value));
 			++tier.kvCount;
-			bin.kvPairs[bin.kvCount] = std::move(value);
 			return iterator(this, tierIndex, binIndex, bin.kvCount++);
 		}
 #if (kickFirst)
@@ -520,8 +534,8 @@ private:
 #else
 		std::size_t kickIndex = hash % bin.kvCount;
 #endif
-		mut_value_type otherValue = std::move(bin.kvPairs[kickIndex].value());
-		bin.kvPairs[kickIndex] = std::move(value);
+		mut_value_type otherValue = bin.getMove(kickIndex);
+		bin.emplace(kickIndex, std::move(value));
 		insertNonExistingKey(std::move(otherValue), (tierIndex + 1) % tiers.size(), loopCount + 1);
 		return iterator(this, tierIndex, binIndex, kickIndex);
 	}
