@@ -31,12 +31,23 @@ int test() {
     for (int i = 0; i < iterations; ++i) {
         int key = keyDist(rng);
         std::string val = randomString();
-        if (i % 2 == 0) {
+        switch (i % 4) {
+		case 0: {
             cuckooMap.insert_or_assign(key, val);
             stdMap.insert_or_assign(key, val);
-        } else {
-            cuckooMap.try_emplace(key, val);
+		} break;
+        case 1: {
+			cuckooMap.try_emplace(key, val);
             stdMap.try_emplace(key, val);
+		} break;
+		case 2: {
+			cuckooMap.insert({key, val});
+            stdMap.insert({key, val});
+		} break;
+		case 3: {
+			cuckooMap.erase(key);
+            stdMap.erase(key);
+		} break;
         }
     }
 
@@ -124,14 +135,14 @@ void speedTest() {
 	{
 		TieredCuckooHash<unsigned int, unsigned int> tieredCuckooHash;
 		std::unordered_map<unsigned int, unsigned int> stdHashMap;
-		for (unsigned int j = 0; j < 2000000; j++) {
+		for (unsigned int j = 0; j < 20000000; j++) {
 			auto pair = std::make_pair(rand(), rand());
 			tieredCuckooHash.insert(pair);
 			stdHashMap.insert(pair);
 		}
 		{
 			auto start = std::chrono::high_resolution_clock::now();
-			for (unsigned int j = 0; j < 1000000; j++) {
+			for (unsigned int j = 0; j < 10000000; j++) {
 				tieredCuckooHash.find(rand());
 			}
 			auto duration = std::chrono::high_resolution_clock::now() - start;
@@ -139,8 +150,60 @@ void speedTest() {
 		}
 		{
 			auto start = std::chrono::high_resolution_clock::now();
-			for (unsigned int i = 0; i < 1000000; i++) {
+			for (unsigned int i = 0; i < 10000000; i++) {
 				stdHashMap.find(rand());
+			}
+			auto duration = std::chrono::high_resolution_clock::now() - start;
+			std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() / 1e9 << "\n";
+		}
+	}
+	std::cout << "read values[0, 100000]\n";
+	{
+		TieredCuckooHash<unsigned int, unsigned int> tieredCuckooHash;
+		std::unordered_map<unsigned int, unsigned int> stdHashMap;
+		for (unsigned int j = 0; j < 20000000; j++) {
+			auto pair = std::make_pair(rand()%100000, rand()%100000);
+			tieredCuckooHash.insert(pair);
+			stdHashMap.insert(pair);
+		}
+		{
+			auto start = std::chrono::high_resolution_clock::now();
+			for (unsigned int j = 0; j < 10000000; j++) {
+				tieredCuckooHash.find(rand()%100000);
+			}
+			auto duration = std::chrono::high_resolution_clock::now() - start;
+			std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() / 1e9 << "\n";
+		}
+		{
+			auto start = std::chrono::high_resolution_clock::now();
+			for (unsigned int i = 0; i < 10000000; i++) {
+				stdHashMap.find(rand()%100000);
+			}
+			auto duration = std::chrono::high_resolution_clock::now() - start;
+			std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() / 1e9 << "\n";
+		}
+	}
+	std::cout << "erase\n";
+	{
+		TieredCuckooHash<unsigned int, unsigned int> tieredCuckooHash;
+		std::unordered_map<unsigned int, unsigned int> stdHashMap;
+		for (unsigned int j = 0; j < 4000000; j++) {
+			auto pair = std::make_pair(rand(), rand());
+			tieredCuckooHash.insert(pair);
+			stdHashMap.insert(pair);
+		}
+		{
+			auto start = std::chrono::high_resolution_clock::now();
+			for (unsigned int j = 0; j < 1000000; j++) {
+				tieredCuckooHash.erase(rand());
+			}
+			auto duration = std::chrono::high_resolution_clock::now() - start;
+			std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() / 1e9 << "\n";
+		}
+		{
+			auto start = std::chrono::high_resolution_clock::now();
+			for (unsigned int i = 0; i < 1000000; i++) {
+				stdHashMap.erase(rand());
 			}
 			auto duration = std::chrono::high_resolution_clock::now() - start;
 			std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() / 1e9 << "\n";
@@ -174,6 +237,33 @@ void speedTest() {
 		std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() / 1e9 / 20<< "\n";
 	}
 
+	std::cout << "write/erase\n";
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		for (unsigned int i = 0; i < 20; i++) {
+			TieredCuckooHash<unsigned int, unsigned int> tieredCuckooHash;
+			for (unsigned int j = 0; j < 1000000; j++) {
+				tieredCuckooHash.insert({rand(), rand()});
+				tieredCuckooHash.erase(rand());
+			}
+		}
+		auto duration = std::chrono::high_resolution_clock::now() - start;
+		std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() / 1e9 / 20 << "\n";
+	}
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		for (unsigned int i = 0; i < 20; i++) {
+			std::unordered_map<unsigned int, unsigned int> stdHashMap;
+			stdHashMap.reserve(1024);
+			for (unsigned int i = 0; i < 1000000; i++) {
+				stdHashMap.insert({rand(), rand()});
+				stdHashMap.erase(rand());
+			}
+		}
+		auto duration = std::chrono::high_resolution_clock::now() - start;
+		std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() / 1e9 / 20<< "\n";
+	}
+
 	std::cout << "write/read local\n";
 	{
 		auto start = std::chrono::high_resolution_clock::now();
@@ -200,6 +290,39 @@ void speedTest() {
 				for (unsigned int i = 0; i < 10000; i++) {
 					stdHashMap.insert({zone + (rand() % 2500), rand()});
 					stdHashMap.find(zone + (rand() % 2500));
+				}
+			}
+		}
+		auto duration = std::chrono::high_resolution_clock::now() - start;
+		std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() / 1e9 / 10<< "\n";
+	}
+
+	std::cout << "write/erase local\n";
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		for (unsigned int i = 0; i < 10; i++) {
+			TieredCuckooHash<unsigned int, unsigned int> tieredCuckooHash;
+			for (unsigned int j = 0; j < 1000; j++) {
+				unsigned int zone = rand();
+				for (unsigned int j = 0; j < 10000; j++) {
+					tieredCuckooHash.insert({zone + (rand() % 2500), rand()});
+					tieredCuckooHash.erase(zone + (rand() % 2500));
+				}
+			}
+		}
+		auto duration = std::chrono::high_resolution_clock::now() - start;
+		std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() / 1e9 / 10 << "\n";
+	}
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		for (unsigned int i = 0; i < 10; i++) {
+			std::unordered_map<unsigned int, unsigned int> stdHashMap;
+			stdHashMap.reserve(1024);
+			for (unsigned int i = 0; i < 1000; i++) {
+				unsigned int zone = rand();
+				for (unsigned int i = 0; i < 10000; i++) {
+					stdHashMap.insert({zone + (rand() % 2500), rand()});
+					stdHashMap.erase(zone + (rand() % 2500));
 				}
 			}
 		}

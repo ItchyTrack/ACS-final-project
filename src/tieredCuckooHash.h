@@ -236,6 +236,8 @@ public:
 		std::size_t binIndex;
 		std::size_t kvPairIndex;
 	};
+	typedef iterator local_iterator;
+	typedef const_iterator const_local_iterator;
 
 	// allocator_type get_allocator() const noexcept { return ;} //
 
@@ -359,7 +361,7 @@ public:
 	std::pair<iterator, bool> insert_or_assign(Key&& key, M&& obj) {
 		std::pair<iterator, bool> pair = emplace_key_and_args(std::move(key), std::forward<M>(obj));
 		if (!pair.second) {
-			pair.first->second =  std::forward<M>(obj);
+			pair.first->second = std::forward<M>(obj);
 		}
 		return pair;
 	}
@@ -393,6 +395,49 @@ public:
 	iterator try_emplace(const_iterator, const Key& key, Args&&... args) {
 		return try_emplace(key, std::forward<Args>(args)...).first;
 	}
+	// ------------------------------ erase(iterator pos) ------------------------------
+	iterator erase(iterator pos) {
+		Bin& bin = tiers[pos.tierIndex].table[pos.binIndex];
+		--kvCount;
+		--tiers[pos.tierIndex].kvCount;
+		if (bin.kvCount-1 == pos.kvPairIndex) {
+			bin.destroy(pos.kvPairIndex);
+			--bin.kvCount;
+			return ++pos;
+		} else {
+			bin.emplace(pos.kvPairIndex, bin.getMove(bin.kvCount - 1));
+			--bin.kvCount;
+			return pos;
+		}
+	}
+	// ------------------------------ erase(const_iterator pos) ------------------------------
+	iterator erase(const_iterator pos) {
+		Bin& bin = tiers[pos.tierIndex].table[pos.binIndex];
+		--kvCount;
+		--tiers[pos.tierIndex].kvCount;
+		if (bin.kvCount-1 == pos.kvPairIndex) {
+			bin.destroy(pos.kvPairIndex);
+			--bin.kvCount;
+			return ++pos;
+		} else {
+			bin.emplace(pos.kvPairIndex, bin.getMove(bin.kvCount - 1));
+			--bin.kvCount;
+			return pos;
+		}
+	}
+	// ------------------------------ erase(const_iterator first, const_iterator last) ------------------------------
+	iterator erase(const_iterator first, const_iterator last) {
+		for (; first != last; first = erase(first)) {}
+		return iterator(last.tieredCuckooHash, last.tierIndex, last.binIndex, last.kvPairIndex);
+	}
+	// ------------------------------ erase(const Key& key) ------------------------------
+	size_type erase(const Key& key) {
+		iterator iter = find(key);
+		if (iter == end())
+			return 0;
+		erase(iter);
+		return 1;
+	}
 	// Lookup
 	// ------------------------------ at(const Key& key) ------------------------------
 	T& at(const Key& key) {
@@ -408,13 +453,17 @@ public:
 			throw std::out_of_range("TieredCuckooHash::at: key not found");
 		return iter->second;
 	}
-	// ------------------------------ operator[]( const Key& key ) ------------------------------
+	// ------------------------------ operator[](const Key& key) ------------------------------
 	T& operator[](const Key& key) {
 		return emplace(key, mapped_type()).first->second;
 	}
-	// ------------------------------ operator[]( Key&& key ) ------------------------------
+	// ------------------------------ operator[](Key&& key) ------------------------------
 	T& operator[](Key&& key) {
 		return emplace(std::move(key), mapped_type()).first->second;
+	}
+	// ------------------------------ count(const Key& key) ------------------------------
+	size_type count(const Key& key) const {
+		return static_cast<size_type>(find(key) != end());
 	}
 	// ------------------------------ find(const Key& key) ------------------------------
 	iterator find(const Key& key) {
@@ -443,6 +492,100 @@ public:
 			}
 		}
 		return cend();
+	}
+	// ------------------------------ contains(const Key& key) const ------------------------------
+	bool contains( const Key& key ) const {
+		return find(key) != end();
+	}
+	// ------------------------------ equal_range(const Key& key) ------------------------------
+	std::pair<iterator, iterator> equal_range(const Key& key) {
+		iterator iter = find(key);
+		iterator endIter = iter;
+		if (iter != end())
+			++endIter;
+		return std::pair<iterator, iterator>(iter, endIter);
+	}
+	// ------------------------------ equal_range(const Key& key) const ------------------------------
+	std::pair<const_iterator, const_iterator> equal_range(const Key& key) const {
+		const_iterator iter = find(key);
+		const_iterator endIter = iter;
+		if (iter != end())
+			++endIter;
+		return std::pair<const_iterator, const_iterator>(iter, endIter);
+	}
+	// Bucket interface
+	// // ------------------------------ begin(size_type) ------------------------------
+	// local_iterator begin(size_type n) {
+	// 	size_type binCount = tiers[0];
+	// 	size_type tierIndex = 0;
+	// 	while (binCount <= n) {
+	// 		binCount += tiers[++tierIndex].table.size();
+	// 		if (tierIndex >= tiers.size()) return end();
+	// 	}
+	// 	return local_iterator(this, tierIndex, n - (binCount - tiers[++tierIndex].table.size()), 0);
+	// }
+	// // ------------------------------ begin(size_type) const ------------------------------
+	// const_local_iterator begin(size_type n) const {
+	// 	return cbegin(n);
+	// }
+	// // ------------------------------ cbegin(size_type) const ------------------------------
+	// const_local_iterator cbegin(size_type n) const {
+	// 	size_type binCount = tiers[0];
+	// 	size_type tierIndex = 0;
+	// 	while (binCount <= n) {
+	// 		binCount += tiers[++tierIndex].table.size();
+	// 		if (tierIndex >= tiers.size()) return end();
+	// 	}
+	// 	return const_local_iterator(this, tierIndex, n - (binCount - tiers[++tierIndex].table.size()), 0);
+	// }
+	// // ------------------------------ end(size_type) ------------------------------
+	// local_iterator end(size_type n) {
+	// 	size_type binCount = tiers[0];
+	// 	size_type tierIndex = 0;
+	// 	while (binCount <= n) {
+	// 		binCount += tiers[++tierIndex].table.size();
+	// 		if (tierIndex >= tiers.size()) return end();
+	// 	}
+	// 	return local_iterator(this, tierIndex, n - (binCount - tiers[++tierIndex].table.size()), 0);
+	// }
+	// // ------------------------------ end(size_type) const ------------------------------
+	// const_local_iterator end(size_type n) const {
+	// 	return cend(n);
+	// }
+	// // ------------------------------ cend(size_type) const ------------------------------
+	// const_local_iterator cend(size_type n) const {
+	// 	size_type binCount = tiers[0];
+	// 	size_type tierIndex = 0;
+	// 	while (binCount <= n) {
+	// 		binCount += tiers[++tierIndex].table.size();
+	// 		if (tierIndex >= tiers.size()) return end();
+	// 	}
+	// 	return const_local_iterator(this, tierIndex, n - (binCount - tiers[++tierIndex].table.size()), 0);
+	// }
+	// ------------------------------ bucket_count() const ------------------------------
+	size_type bucket_count() const {
+		size_type binCount = 0;
+		for (const Tier& tier : tiers) {
+			binCount += tier.table.size();
+		}
+		return binCount;
+	}
+	// Hash policy
+	// ------------------------------ load_factor() const ------------------------------
+	float load_factor() const {
+		return (float)size() / (float)bucket_count();
+	}
+	// ------------------------------ max_load_factor() const ------------------------------
+	float max_load_factor() const {
+		return BinSize;
+	}
+	// ------------------------------ max_load_factor() const ------------------------------
+	void max_load_factor(float ml) {} // does not doing anything
+	// ------------------------------ rehash(size_type count) ------------------------------
+	void rehash(size_type count) {} // does not need to do anything
+	// ------------------------------ reserve(size_type count) ------------------------------
+	void reserve(size_type count) {
+		rehash(std::ceil(count / max_load_factor()));
 	}
 
 	void visualize() const {
