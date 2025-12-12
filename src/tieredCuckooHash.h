@@ -3,12 +3,42 @@
 
 #include <iostream>
 #include <array>
-#include <optional>
 #include <limits>
 #include <functional>
 #include <utility>
 #include <type_traits>
 #include <stdexcept>
+#include <lz4.h>
+
+
+template <typename T>
+int compressed_size_after_lz4(const std::vector<T>& input)
+{
+	// Ensure T is trivially copyable (POD)
+	static_assert(std::is_trivially_copyable<T>::value, "T must be a POD type.");
+
+	if (input.empty()) return 0;
+
+	// Calculate source size in bytes
+	const int src_size = static_cast<int>(input.size() * sizeof(T));
+	const int max_dst_size = LZ4_compressBound(src_size);
+
+	std::vector<char> compressed(max_dst_size);
+
+	const int compressed_size = LZ4_compress_default(
+		reinterpret_cast<const char*>(input.data()),  // cast to char*
+		compressed.data(),
+		src_size,
+		max_dst_size
+	);
+
+	if (compressed_size <= 0) {
+		// Failed compression
+		return -1;
+	}
+
+	return compressed_size;
+}
 
 #define kickFirst true
 #define maxTableSize 10000000
@@ -603,6 +633,21 @@ public:
 			}
 			std::cout << "\n";
 		}
+	}
+
+	unsigned long long getUncompressedSize() const {
+		unsigned long long size = 0;
+		for (const Tier& tier : tiers) {
+			size += tier.table.size() * sizeof(Bin);
+		}
+		return size;
+	}
+	unsigned long long getCompressedSize() const {
+		unsigned long long size = 0;
+		for (const Tier& tier : tiers) {
+			size += compressed_size_after_lz4(tier.table);
+		}
+		return size;
 	}
 
 private:

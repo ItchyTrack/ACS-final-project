@@ -3,6 +3,7 @@
 #include <cassert>
 #include <random>
 #include <string>
+#include "test.h"
 
 #include "tieredCuckooHash.h"
 
@@ -331,9 +332,22 @@ void speedTest() {
 	}
 }
 
+void compresstionTest() {
+	TieredCuckooHash<unsigned int, unsigned int> tieredCuckooHash;
+	std::unordered_map<unsigned int, unsigned int> stdHashMap;
+	for (unsigned int j = 0; j < 20000000; j++) {
+		auto pair = std::make_pair(rand()%100000, rand()%100000);
+		tieredCuckooHash.insert(pair);
+		stdHashMap.insert(pair);
+	}
+	std::cout << tieredCuckooHash.getUncompressedSize() << std::endl;
+	std::cout << tieredCuckooHash.getCompressedSize() << std::endl;
+}
 
 int main() {
 	// test();
-	speedTest();
+	// speedTest();
+	// compresstionTest();
+	runTest();
 	return 0;
 }
