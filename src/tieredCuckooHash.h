@@ -3,41 +3,50 @@
 
 #include <iostream>
 #include <array>
-#include <limits>
 #include <functional>
 #include <utility>
 #include <type_traits>
 #include <stdexcept>
-#include <lz4.h>
 
+#include "lzav.h"
+
+const unsigned int compressionBlockSize = 4096;
 
 template <typename T>
-int compressed_size_after_lz4(const std::vector<T>& input)
-{
-	// Ensure T is trivially copyable (POD)
-	static_assert(std::is_trivially_copyable<T>::value, "T must be a POD type.");
-
+int compressed_size_after(const std::vector<T>& input, unsigned int blockSizeBytes) {
 	if (input.empty()) return 0;
 
-	// Calculate source size in bytes
+	unsigned long long compressed_size = 0;
+
 	const int src_size = static_cast<int>(input.size() * sizeof(T));
-	const int max_dst_size = LZ4_compressBound(src_size);
+	for (unsigned int blockIndex = 0; blockIndex < (src_size / blockSizeBytes); blockIndex += 1) {
 
-	std::vector<char> compressed(max_dst_size);
+		const int max_dst_size = lzav_compress_bound_hi(blockSizeBytes);
+		std::vector<char> compressed(max_dst_size);
 
-	const int compressed_size = LZ4_compress_default(
-		reinterpret_cast<const char*>(input.data()),  // cast to char*
-		compressed.data(),
-		src_size,
-		max_dst_size
-	);
-
-	if (compressed_size <= 0) {
-		// Failed compression
-		return -1;
+		compressed_size += lzav_compress_hi(
+			reinterpret_cast<const char*>(input.data()) + (blockIndex * blockSizeBytes),
+			compressed.data(),
+			blockSizeBytes,
+			max_dst_size
+		);
 	}
-
 	return compressed_size;
+
+	// // Calculate source size in bytes
+	// const int src_size = static_cast<int>(input.size() * sizeof(T));
+	// const int max_dst_size = lzav_compress_bound_hi(src_size);
+
+	// std::vector<char> compressed(max_dst_size);
+
+	// const int compressed_size = lzav_compress_hi(
+	// 	reinterpret_cast<const char*>(input.data()),
+	// 	compressed.data(),
+	// 	src_size,
+	// 	max_dst_size
+	// );
+
+	// return compressed_size;
 }
 
 #define kickFirst true
@@ -50,7 +59,7 @@ template <
     class KeyEqual = std::equal_to<Key>,
     class Allocator = std::allocator<std::pair<const Key, T>>, // no used, idk how it works
 	std::size_t MaxLoopCountScale = 4096,
-	std::size_t BinSize = 2,
+	std::size_t BinSize = 16,
 	std::size_t InitialTierSize = 1024,
 	std::size_t TierGrowthFactor = 5
 >
@@ -603,7 +612,7 @@ public:
 	// Hash policy
 	// ------------------------------ load_factor() const ------------------------------
 	float load_factor() const {
-		return (float)size() / (float)bucket_count();
+		return (float)(size() * sizeof(value_type)) / (float)(bucket_count() * sizeof(Bin));
 	}
 	// ------------------------------ max_load_factor() const ------------------------------
 	float max_load_factor() const {
@@ -635,19 +644,29 @@ public:
 		}
 	}
 
-	unsigned long long getUncompressedSize() const {
-		unsigned long long size = 0;
+	size_t getUncompressedSize() const {
+		size_t size = 0;
 		for (const Tier& tier : tiers) {
 			size += tier.table.size() * sizeof(Bin);
 		}
 		return size;
 	}
-	unsigned long long getCompressedSize() const {
-		unsigned long long size = 0;
+	size_t getCompressedSize() const {
+		size_t size = 0;
+		size_t index = 0;
 		for (const Tier& tier : tiers) {
-			size += compressed_size_after_lz4(tier.table);
+			// if (index <= 2) {
+				// size += tier.table.size() * sizeof(Bin);
+			// } else {
+				size += compressed_size_after(tier.table, compressionBlockSize);
+			// }
+			index++;
 		}
 		return size;
+	}
+
+	size_t getTierCount() const {
+		return tiers.size();
 	}
 
 private:

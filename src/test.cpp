@@ -6,48 +6,78 @@
 #include "tieredCuckooHash.h"
 #include "test.h"
 
-int runTest() {
-    // Parameters
-    const size_t numElements = 20'000'000; // 10 million
-    TieredCuckooHash<int, int> hashmap;
+template <unsigned int Bytes>
+struct BytesStruct {
+	BytesStruct(bool doRandom = false) {
+		if (doRandom) {
+			for (unsigned int i = 0; i < Bytes; i++){
+				data[i] = (std::uint8_t)rand();
+			}
+		}
+	}
+	std::array<std::uint8_t, Bytes> data;
+};
 
-    // Benchmark insertion
-    auto startInsert = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < numElements; ++i) {
-        hashmap[static_cast<int>(i)] = static_cast<int>(i * 2);
-    }
-    auto endInsert = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> insertTime = endInsert - startInsert;
+void runTest() {
+	const unsigned long long startSize = 300000;
+	const unsigned long long incSize = 100000;
 
-    // Memory usage
-    size_t originalSize = hashmap.getUncompressedSize();
-    size_t compressedSize = hashmap.getCompressedSize();
 
-    // Prepare lookup keys
-    std::vector<int> lookupKeys(numElements);
-    std::mt19937 rng(42); // fixed seed for reproducibility
-    std::uniform_int_distribution<int> dist(0, static_cast<int>(numElements) - 1);
-    for (size_t i = 0; i < numElements; ++i) {
-        lookupKeys[i] = dist(rng);
-    }
 
-    // Benchmark lookup
-    auto startLookup = std::chrono::high_resolution_clock::now();
-    volatile int sum = 0;
-    for (size_t i = 0; i < numElements; ++i) {
-        sum += hashmap[lookupKeys[i]];
-    }
-    auto endLookup = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> lookupTime = endLookup - startLookup;
+	std::mt19937 rng(42);
+	for (unsigned long long tableSize = startSize; tableSize <= startSize + incSize*25; tableSize += incSize) {
+		float avgInsertThroughput = 0;
+		float avgLookupThroughput = 0;
+		float avgCompressionRatio = 0;
+		float avgLoadFactor = 0;
+		unsigned int count = 0;
+		for (unsigned int i = 0; i < 6; i++) {
+			TieredCuckooHash<unsigned long long, BytesStruct<56>> hashmap;
+			std::vector<int> lookupKeys(tableSize);
+			std::uniform_int_distribution<int> dist(0, static_cast<int>(tableSize) - 1);
+			for (size_t i = 0; i < tableSize; ++i) {
+				lookupKeys[i] = dist(rng);
+				hashmap[lookupKeys[i]] = BytesStruct<56>(true);
+			}
+			std::ranges::shuffle(lookupKeys, rng);
 
-    // Report results
-    std::cout << "Insert throughput: " << static_cast<double>(numElements) / insertTime.count() << " ops/s\n";
-    std::cout << "Lookup throughput: " << static_cast<double>(numElements) / lookupTime.count() << " ops/s\n";
-    std::cout << "Memory usage before compression: " << static_cast<double>(originalSize) / (1024*1024) << " MB\n";
-    std::cout << "Memory usage after compression: " << static_cast<double>(compressedSize) / (1024*1024) << " MB\n";
-    std::cout << "Compression ratio: " << static_cast<double>(originalSize) / static_cast<double>(compressedSize) << "\n";
-    std::cout << "Memory per element: " << static_cast<double>(originalSize) / numElements << " bytes\n";
-    std::cout << "Compressed memory per element: " << static_cast<double>(compressedSize) / numElements << " bytes\n";
+			// get basics
+			size_t originalSize = hashmap.getUncompressedSize();
+			size_t compressedSize = hashmap.getCompressedSize();
+			float loadFactor = hashmap.load_factor();
+			size_t teirCount = hashmap.getTierCount();
 
-    return 0;
+			const size_t numElements = 10000;
+
+			// look up
+			auto startLookup = std::chrono::high_resolution_clock::now();
+			volatile unsigned long long sum = 0;
+			for (size_t i = 0; i < numElements; ++i) {
+				sum += hashmap[lookupKeys[i]].data[i%56];
+			}
+			auto endLookup = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double> lookupTime = endLookup - startLookup;
+
+			// insert
+			auto startInsert = std::chrono::high_resolution_clock::now();
+			for (size_t i = 0; i < numElements; ++i) {
+				hashmap[static_cast<int>(i)] = static_cast<int>(i * 2);
+			}
+			auto endInsert = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double> insertTime = endInsert - startInsert;
+
+			if (teirCount == 4) {
+				avgInsertThroughput += static_cast<double>(numElements) / insertTime.count();
+				avgLookupThroughput += static_cast<double>(numElements) / lookupTime.count();
+				avgCompressionRatio += static_cast<double>(compressedSize) / static_cast<double>(originalSize);
+				avgLoadFactor += loadFactor;
+				count += 1;
+			}
+		}
+		if (count == 0) continue;
+		std::cout << "Insert throughput: " << avgInsertThroughput / (float)(count) << " ops/s\n";
+		std::cout << "Lookup throughput: " << avgLookupThroughput / (float)(count) << " ops/s\n";
+		std::cout << "Compression ratio: " << avgCompressionRatio / (float)(count) << "\n";
+		std::cout << "Load factor: " << avgLoadFactor / (float)(count) << "\n";
+	}
 }
