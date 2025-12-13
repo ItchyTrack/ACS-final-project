@@ -16,8 +16,38 @@ all_comp = []
 # Store right-axis objects so we don't create duplicates
 right_axes = []
 
+plt.rcParams.update({
+    "font.size": 14,
+    "axes.titlesize": 14,
+    "axes.labelsize": 18,
+    "xtick.labelsize": 17,
+    "ytick.labelsize": 17,
+	"axes.labelweight": "bold",
+    "axes.titleweight": "bold",
+    "legend.fontsize": 15
+})
+
 # Create a single figure with two stacked subplots
 fig, axes = plt.subplots(2, 1, figsize=(11, 8), sharex=True)
+
+fig.text(
+    0.02, 0.5,
+    "Throughput (M ops/s)",
+    va="center",
+    rotation="vertical",
+    fontsize=18,
+    fontweight="bold"
+)
+
+# Shared right Y label
+fig.text(
+    0.96, 0.5,
+    "Memory Space Saving",
+    va="center",
+    rotation=-90,
+    fontsize=18,
+    fontweight="bold"
+)
 
 for idx, path in enumerate(paths):
     data = open(path[0]).readlines()
@@ -50,7 +80,7 @@ for idx, path in enumerate(paths):
     ax1.set_yscale("log")
     l1 = ax1.plot(loadFactors, lookupThroughputs, '-o', label="Lookup Throughput")
     l2 = ax1.plot(loadFactors, insertThroughputs, '-s', label="Insert Throughput")
-    ax1.set_ylabel("Throughput (M ops/s)")
+    # ax1.set_ylabel("Throughput (M ops/s)")
     ax1.grid(True, which="both", linestyle="--", linewidth=0.5)
     ax1.set_title(f"S_bk = {path[1]} KB", loc='left')
 
@@ -59,7 +89,7 @@ for idx, path in enumerate(paths):
     right_axes.append(ax2)  # store this axis
     l3 = ax2.plot(loadFactors, compressionRatios, '-^', color="green",
                   label="Memory Space Saving")
-    ax2.set_ylabel("Memory Space Saving")
+    # ax2.set_ylabel("Memory Space Saving")
 
 # ---- Apply consistent scales across subplots with padding ----
 xmin, xmax = min(all_load), max(all_load)
@@ -85,8 +115,7 @@ for ax2 in right_axes:
 
 lines = l1 + l2 + l3
 labels = [line.get_label() for line in lines]
-axes[0].legend(lines, labels, loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.25))
+axes[0].legend(lines, labels, loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.3))
 
-# plt.xlabel("Load Factor (α)")
-plt.tight_layout()
+plt.tight_layout(rect=[0.03, 0, 0.97, 1])
 plt.show()
