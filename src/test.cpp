@@ -19,19 +19,17 @@ struct BytesStruct {
 };
 
 void runTest() {
-	const unsigned long long startSize = 300000;
-	const unsigned long long incSize = 100000;
-
-
+	const unsigned long long startSize = 120000;
+	const unsigned long long incSize = 20000;
 
 	std::mt19937 rng(42);
-	for (unsigned long long tableSize = startSize; tableSize <= startSize + incSize*25; tableSize += incSize) {
+	for (unsigned long long tableSize = startSize; tableSize <= startSize + incSize*30; tableSize += incSize) {
 		float avgInsertThroughput = 0;
 		float avgLookupThroughput = 0;
 		float avgCompressionRatio = 0;
 		float avgLoadFactor = 0;
 		unsigned int count = 0;
-		for (unsigned int i = 0; i < 6; i++) {
+		for (unsigned int i = 0; i < 4; i++) {
 			TieredCuckooHash<unsigned long long, BytesStruct<56>> hashmap;
 			std::vector<int> lookupKeys(tableSize);
 			std::uniform_int_distribution<int> dist(0, static_cast<int>(tableSize) - 1);
@@ -73,6 +71,7 @@ void runTest() {
 				avgLoadFactor += loadFactor;
 				count += 1;
 			}
+			// std::cout << teirCount << "\n";
 		}
 		if (count == 0) continue;
 		std::cout << "Insert throughput: " << avgInsertThroughput / (float)(count) << " ops/s\n";

@@ -1,88 +1,108 @@
-Insert throughput: 2.57597e+06 ops/s
-Lookup throughput: 8.94228e+06 ops/s
-Compression ratio: 0.156983
-Load factor: 0.147236
-Insert throughput: 2.55133e+06 ops/s
-Lookup throughput: 8.05375e+06 ops/s
-Compression ratio: 0.180186
-Load factor: 0.171725
-Insert throughput: 2.4062e+06 ops/s
-Lookup throughput: 7.7655e+06 ops/s
-Compression ratio: 0.204217
-Load factor: 0.196352
-Insert throughput: 2.33797e+06 ops/s
-Lookup throughput: 7.56587e+06 ops/s
-Compression ratio: 0.229052
-Load factor: 0.220765
-Insert throughput: 2.28732e+06 ops/s
-Lookup throughput: 6.99895e+06 ops/s
-Compression ratio: 0.254573
-Load factor: 0.245403
-Insert throughput: 2.28662e+06 ops/s
-Lookup throughput: 6.78905e+06 ops/s
-Compression ratio: 0.279992
-Load factor: 0.269968
-Insert throughput: 2.2956e+06 ops/s
-Lookup throughput: 6.93527e+06 ops/s
-Compression ratio: 0.305158
-Load factor: 0.294464
-Insert throughput: 2.25691e+06 ops/s
-Lookup throughput: 6.13623e+06 ops/s
-Compression ratio: 0.330178
-Load factor: 0.319102
-Insert throughput: 2.29099e+06 ops/s
-Lookup throughput: 6.39181e+06 ops/s
-Compression ratio: 0.354823
-Load factor: 0.343575
-Insert throughput: 2.22167e+06 ops/s
-Lookup throughput: 5.60481e+06 ops/s
-Compression ratio: 0.379371
-Load factor: 0.368175
-Insert throughput: 2.25291e+06 ops/s
-Lookup throughput: 5.50123e+06 ops/s
-Compression ratio: 0.403725
-Load factor: 0.392694
-Insert throughput: 2.27588e+06 ops/s
-Lookup throughput: 5.87279e+06 ops/s
-Compression ratio: 0.427994
-Load factor: 0.417268
-Insert throughput: 2.28986e+06 ops/s
-Lookup throughput: 5.67692e+06 ops/s
-Compression ratio: 0.452223
-Load factor: 0.441875
-Insert throughput: 2.3299e+06 ops/s
-Lookup throughput: 6.1265e+06 ops/s
-Compression ratio: 0.476166
-Load factor: 0.466316
-Insert throughput: 2.31414e+06 ops/s
-Lookup throughput: 5.21007e+06 ops/s
-Compression ratio: 0.500047
-Load factor: 0.490794
-Insert throughput: 2.31173e+06 ops/s
-Lookup throughput: 5.94738e+06 ops/s
-Compression ratio: 0.523907
-Load factor: 0.515308
-Insert throughput: 2.32396e+06 ops/s
-Lookup throughput: 5.73747e+06 ops/s
-Compression ratio: 0.547817
-Load factor: 0.539915
-Insert throughput: 2.3121e+06 ops/s
-Lookup throughput: 5.70738e+06 ops/s
-Compression ratio: 0.571583
-Load factor: 0.564425
-Insert throughput: 2.32717e+06 ops/s
-Lookup throughput: 5.9084e+06 ops/s
-Compression ratio: 0.595309
-Load factor: 0.588956
-Insert throughput: 2.28436e+06 ops/s
-Lookup throughput: 5.55485e+06 ops/s
-Compression ratio: 0.619041
-Load factor: 0.613527
-Insert throughput: 2.2778e+06 ops/s
-Lookup throughput: 5.62989e+06 ops/s
-Compression ratio: 0.642665
-Load factor: 0.63802
-Insert throughput: 2.32134e+06 ops/s
-Lookup throughput: 5.73386e+06 ops/s
-Compression ratio: 0.666422
-Load factor: 0.662731
+Insert throughput: 2.66427e+06 ops/s
+Lookup throughput: 2.29248e+07 ops/s
+Compression ratio: 0.12698
+Load factor: 0.115163
+Insert throughput: 2.66085e+06 ops/s
+Lookup throughput: 2.76359e+07 ops/s
+Compression ratio: 0.145601
+Load factor: 0.134326
+Insert throughput: 2.68714e+06 ops/s
+Lookup throughput: 2.50336e+07 ops/s
+Compression ratio: 0.164485
+Load factor: 0.15358
+Insert throughput: 2.62811e+06 ops/s
+Lookup throughput: 2.11411e+07 ops/s
+Compression ratio: 0.18349
+Load factor: 0.172699
+Insert throughput: 2.4481e+06 ops/s
+Lookup throughput: 2.04782e+07 ops/s
+Compression ratio: 0.202861
+Load factor: 0.191936
+Insert throughput: 2.42117e+06 ops/s
+Lookup throughput: 1.84723e+07 ops/s
+Compression ratio: 0.222214
+Load factor: 0.211045
+Insert throughput: 2.58359e+06 ops/s
+Lookup throughput: 2.20043e+07 ops/s
+Compression ratio: 0.241818
+Load factor: 0.230322
+Insert throughput: 2.48766e+06 ops/s
+Lookup throughput: 1.96491e+07 ops/s
+Compression ratio: 0.261084
+Load factor: 0.249218
+Insert throughput: 2.57501e+06 ops/s
+Lookup throughput: 2.25945e+07 ops/s
+Compression ratio: 0.280769
+Load factor: 0.268573
+Insert throughput: 2.56269e+06 ops/s
+Lookup throughput: 2.10801e+07 ops/s
+Compression ratio: 0.300237
+Load factor: 0.287825
+Insert throughput: 2.61448e+06 ops/s
+Lookup throughput: 2.389e+07 ops/s
+Compression ratio: 0.319451
+Load factor: 0.306831
+Insert throughput: 2.46158e+06 ops/s
+Lookup throughput: 1.79832e+07 ops/s
+Compression ratio: 0.339051
+Load factor: 0.326285
+Insert throughput: 2.45646e+06 ops/s
+Lookup throughput: 1.91296e+07 ops/s
+Compression ratio: 0.358019
+Load factor: 0.345206
+Insert throughput: 2.57478e+06 ops/s
+Lookup throughput: 2.19945e+07 ops/s
+Compression ratio: 0.377372
+Load factor: 0.364608
+Insert throughput: 2.41999e+06 ops/s
+Lookup throughput: 1.7697e+07 ops/s
+Compression ratio: 0.396491
+Load factor: 0.383971
+Insert throughput: 2.54445e+06 ops/s
+Lookup throughput: 2.02448e+07 ops/s
+Compression ratio: 0.415011
+Load factor: 0.402791
+Insert throughput: 2.35224e+06 ops/s
+Lookup throughput: 1.70614e+07 ops/s
+Compression ratio: 0.434048
+Load factor: 0.422219
+Insert throughput: 2.55123e+06 ops/s
+Lookup throughput: 1.75784e+07 ops/s
+Compression ratio: 0.452746
+Load factor: 0.441379
+Insert throughput: 2.62342e+06 ops/s
+Lookup throughput: 2.08298e+07 ops/s
+Compression ratio: 0.471129
+Load factor: 0.46021
+Insert throughput: 2.55225e+06 ops/s
+Lookup throughput: 1.95621e+07 ops/s
+Compression ratio: 0.490151
+Load factor: 0.479787
+Insert throughput: 2.5434e+06 ops/s
+Lookup throughput: 1.82324e+07 ops/s
+Compression ratio: 0.508729
+Load factor: 0.499013
+Insert throughput: 2.54281e+06 ops/s
+Lookup throughput: 1.95536e+07 ops/s
+Compression ratio: 0.527072
+Load factor: 0.518054
+Insert throughput: 2.5195e+06 ops/s
+Lookup throughput: 1.7966e+07 ops/s
+Compression ratio: 0.545389
+Load factor: 0.537178
+Insert throughput: 2.55953e+06 ops/s
+Lookup throughput: 1.82082e+07 ops/s
+Compression ratio: 0.563624
+Load factor: 0.556202
+Insert throughput: 2.60325e+06 ops/s
+Lookup throughput: 2.06523e+07 ops/s
+Compression ratio: 0.582193
+Load factor: 0.57563
+Insert throughput: 2.5801e+06 ops/s
+Lookup throughput: 1.97977e+07 ops/s
+Compression ratio: 0.600312
+Load factor: 0.594632
+Insert throughput: 2.41864e+06 ops/s
+Lookup throughput: 1.58089e+07 ops/s
+Compression ratio: 0.618839
+Load factor: 0.614095

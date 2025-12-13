@@ -10,7 +10,7 @@
 
 #include "lzav.h"
 
-const unsigned int compressionBlockSize = 4096;
+const unsigned int compressionBlockSize = 4096;//1024;//
 
 template <typename T>
 int compressed_size_after(const std::vector<T>& input, unsigned int blockSizeBytes) {
@@ -59,7 +59,7 @@ template <
     class KeyEqual = std::equal_to<Key>,
     class Allocator = std::allocator<std::pair<const Key, T>>, // no used, idk how it works
 	std::size_t MaxLoopCountScale = 4096,
-	std::size_t BinSize = 16,
+	std::size_t BinSize = 4,
 	std::size_t InitialTierSize = 1024,
 	std::size_t TierGrowthFactor = 5
 >
