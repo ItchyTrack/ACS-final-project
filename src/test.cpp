@@ -28,6 +28,7 @@ void runTest() {
 		float avgInsertThroughput = 0;
 		float avgLookupThroughput = 0;
 		float avgCompressionRatio = 0;
+		float avgMemorySpaceSaving = 0;
 		float avgLoadFactor = 0;
 		unsigned int count = 0;
 		for (unsigned int i = 0; i < 4; i++) {
@@ -41,10 +42,9 @@ void runTest() {
 			std::ranges::shuffle(lookupKeys, rng);
 
 			// get basics
-			size_t originalSize = hashmap.getUncompressedSize();
+			size_t kvSize = hashmap.getDataSize();
 			size_t compressedSize = hashmap.getCompressedSize();
-			// size_t uncompressedSize = hashmap.getUncompressedSize();
-			// std::cout <<  "kvSize" << originalSize << ", uncompressedSize" << uncompressedSize << ", compressedSize" << compressedSize << "\n";
+			size_t uncompressedSize = hashmap.getUncompressedSize();
 			float loadFactor = hashmap.load_factor();
 			size_t teirCount = hashmap.getTierCount();
 
@@ -75,7 +75,8 @@ void runTest() {
 			if (teirCount == 4) {
 				avgInsertThroughput += static_cast<double>(numElements) / (insertTime.count() + (double)insertTimeCompresstionDelay/1000000000.);
 				avgLookupThroughput += static_cast<double>(numElements) / (lookupTime.count() + (double)lookupTimeCompresstionDelay/1000000000.);
-				avgCompressionRatio += 1 - (static_cast<double>(compressedSize) / static_cast<double>(originalSize));
+				avgCompressionRatio += 1 - (static_cast<double>(compressedSize) / static_cast<double>(uncompressedSize));
+				avgMemorySpaceSaving += 1 - (static_cast<double>(compressedSize) / static_cast<double>(kvSize));
 				avgLoadFactor += loadFactor;
 				count += 1;
 			}
@@ -85,6 +86,7 @@ void runTest() {
 		std::cout << "Insert throughput: " << avgInsertThroughput / (float)(count) << " ops/s\n";
 		std::cout << "Lookup throughput: " << avgLookupThroughput / (float)(count) << " ops/s\n";
 		std::cout << "Compression ratio: " << avgCompressionRatio / (float)(count) << "\n";
+		std::cout << "Memory Space Saving: " << avgMemorySpaceSaving / (float)(count) << "\n";
 		std::cout << "Load factor: " << avgLoadFactor / (float)(count) << "\n";
 	}
 }

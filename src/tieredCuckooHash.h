@@ -14,7 +14,7 @@ const unsigned int compressionBlockSize = 1024;//4096;//
 
 #define doCompresstionDelay true
 #define compresstionDelayAmountNS 200
-#define compresstionDelayFirstTier 3
+#define compresstionDelayFirstTier 3 // T_4
 
 template <typename T>
 int compressed_size_after(const std::vector<T>& input, unsigned int blockSizeBytes) {
@@ -678,14 +678,14 @@ public:
 	}
 	size_t getCompressedSize() const {
 		size_t size = 0;
-		// size_t index = 0;
+		size_t index = 0;
 		for (const Tier& tier : tiers) {
-			// if (index <= 2) {
-				// size += tier.table.size() * sizeof(Bin);
-			// } else {
+			if (index < compresstionDelayFirstTier) {
+				size += tier.table.size() * sizeof(Bin);
+			} else {
 				size += compressed_size_after(tier.table, compressionBlockSize);
-			// }
-			// index++;
+			}
+			index++;
 		}
 		return size;
 	}
