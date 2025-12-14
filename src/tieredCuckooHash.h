@@ -10,7 +10,11 @@
 
 #include "lzav.h"
 
-const unsigned int compressionBlockSize = 4096;//1024;//
+const unsigned int compressionBlockSize = 1024;//4096;//
+
+#define doCompresstionDelay true
+#define compresstionDelayAmountNS 200
+#define compresstionDelayFirstTier 3
 
 template <typename T>
 int compressed_size_after(const std::vector<T>& input, unsigned int blockSizeBytes) {
@@ -56,14 +60,26 @@ template <
 	class Key,
 	class T,
 	class Hash = std::hash<Key>,
-    class KeyEqual = std::equal_to<Key>,
-    class Allocator = std::allocator<std::pair<const Key, T>>, // no used, idk how it works
+	class KeyEqual = std::equal_to<Key>,
+	class Allocator = std::allocator<std::pair<const Key, T>>, // no used, idk how it works
 	std::size_t MaxLoopCountScale = 4096,
 	std::size_t BinSize = 4,
 	std::size_t InitialTierSize = 1024,
 	std::size_t TierGrowthFactor = 5
 >
 class TieredCuckooHash {
+#if doCompresstionDelay
+public:
+	unsigned long long getTotalCompresstionDelayNS() const { return totalCompresstionDelayNS; }
+	void resetCompresstionDelay() { totalCompresstionDelayNS = 0; }
+private:
+	mutable unsigned long long totalCompresstionDelayNS = 0;
+	constexpr void runCompresstionDelay(size_t tier) const {
+		if (tier >= compresstionDelayFirstTier) totalCompresstionDelayNS += compresstionDelayAmountNS;
+	}
+#else
+	constexpr void runCompresstionDelay(size_t tier) const {};
+#endif
 public:
 	typedef Key															key_type;
 	typedef T															mapped_type;
@@ -285,6 +301,7 @@ public:
 		if (empty()) return end();
 		std::size_t tierIndex = 0;
 		while (tiers[tierIndex].kvCount == 0) { ++tierIndex; }
+		runCompresstionDelay(tierIndex);
 		std::size_t binIndex = 0;
 		while (tiers[tierIndex].table[binIndex].kvCount == 0) { ++binIndex; }
 		return iterator(this, tierIndex, binIndex, 0);
@@ -296,6 +313,7 @@ public:
 		if (empty()) return cend();
 		std::size_t tierIndex = 0;
 		while (tiers[tierIndex].kvCount == 0) { ++tierIndex; }
+		runCompresstionDelay(tierIndex);
 		std::size_t binIndex = 0;
 		while (tiers[tierIndex].table[binIndex].kvCount == 0) { ++binIndex; }
 		return const_iterator(this, tierIndex, binIndex, 0);
@@ -320,6 +338,7 @@ public:
 		} else { // if there were no tiers it cant be in one
 			// check if the key is in the map
 			for (std::size_t tierIndex = 0; tierIndex < tiers.size(); ++tierIndex) {
+				runCompresstionDelay(tierIndex);
 				std::size_t binIndex = hash % tiers[tierIndex].table.size();
 				const Bin& bin = tiers[tierIndex].table[binIndex];
 				for (std::size_t kvPairIndex = 0; kvPairIndex < bin.kvCount; ++kvPairIndex) {
@@ -357,6 +376,7 @@ public:
 		} else { // if there were no tiers it cant be in one
 			// check if the key is in the map
 			for (std::size_t tierIndex = 0; tierIndex < tiers.size(); ++tierIndex) {
+				runCompresstionDelay(tierIndex);
 				std::size_t binIndex = hash % tiers[tierIndex].table.size();
 				const Bin& bin = tiers[tierIndex].table[binIndex];
 				for (std::size_t kvPairIndex = 0; kvPairIndex < bin.kvCount; ++kvPairIndex) {
@@ -508,6 +528,7 @@ public:
 	iterator find(const Key& key) {
 		std::size_t hash = hasher{}(key);
 		for (std::size_t tierIndex = 0; tierIndex < tiers.size(); ++tierIndex) {
+			runCompresstionDelay(tierIndex);
 			std::size_t binIndex = hash % tiers[tierIndex].table.size();
 			const Bin& bin = tiers[tierIndex].table[binIndex];
 			for (std::size_t kvPairIndex = 0; kvPairIndex < bin.kvCount; ++kvPairIndex) {
@@ -522,6 +543,7 @@ public:
 	const_iterator find(const Key& key) const {
 		std::size_t hash = hasher{}(key);
 		for (std::size_t tierIndex = 0; tierIndex < tiers.size(); ++tierIndex) {
+			runCompresstionDelay(tierIndex);
 			std::size_t binIndex = hash % tiers[tierIndex].table.size();
 			const Bin& bin = tiers[tierIndex].table[binIndex];
 			for (std::size_t kvPairIndex = 0; kvPairIndex < bin.kvCount; ++kvPairIndex) {
@@ -651,16 +673,19 @@ public:
 		}
 		return size;
 	}
+	size_t getDataSize() const {
+		return size() * sizeof(value_type);
+	}
 	size_t getCompressedSize() const {
 		size_t size = 0;
-		size_t index = 0;
+		// size_t index = 0;
 		for (const Tier& tier : tiers) {
 			// if (index <= 2) {
 				// size += tier.table.size() * sizeof(Bin);
 			// } else {
 				size += compressed_size_after(tier.table, compressionBlockSize);
 			// }
-			index++;
+			// index++;
 		}
 		return size;
 	}
@@ -683,6 +708,7 @@ private:
 		} else { // if there were no tiers it cant be in one
 			// check if the key is in the map
 			for (std::size_t tierIndex = 0; tierIndex < tiers.size(); ++tierIndex) {
+				runCompresstionDelay(tierIndex);
 				std::size_t binIndex = hash % tiers[tierIndex].table.size();
 				const Bin& bin = tiers[tierIndex].table[binIndex];
 				for (std::size_t kvPairIndex = 0; kvPairIndex < bin.kvCount; ++kvPairIndex) {
@@ -727,6 +753,7 @@ private:
 			bin.emplace(0, std::move(value));
 			return iterator(this, tiers.size()-1, binIndex, bin.kvCount++);
 		}
+		runCompresstionDelay(tierIndex);
 		Tier& tier = tiers[tierIndex];
 		std::size_t hash = hasher{}(value.first);
 		std::size_t binIndex = hash % tier.table.size();

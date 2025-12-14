@@ -12,6 +12,7 @@ struct BytesStruct {
 		if (doRandom) {
 			for (unsigned int i = 0; i < Bytes; i++){
 				data[i] = (std::uint8_t)rand();
+				// data[i] = (std::uint8_t)0x10101010;
 			}
 		}
 	}
@@ -42,12 +43,15 @@ void runTest() {
 			// get basics
 			size_t originalSize = hashmap.getUncompressedSize();
 			size_t compressedSize = hashmap.getCompressedSize();
+			// size_t uncompressedSize = hashmap.getUncompressedSize();
+			// std::cout <<  "kvSize" << originalSize << ", uncompressedSize" << uncompressedSize << ", compressedSize" << compressedSize << "\n";
 			float loadFactor = hashmap.load_factor();
 			size_t teirCount = hashmap.getTierCount();
 
 			const size_t numElements = 10000;
 
 			// look up
+			hashmap.resetCompresstionDelay();
 			auto startLookup = std::chrono::high_resolution_clock::now();
 			volatile unsigned long long sum = 0;
 			for (size_t i = 0; i < numElements; ++i) {
@@ -55,19 +59,23 @@ void runTest() {
 			}
 			auto endLookup = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<double> lookupTime = endLookup - startLookup;
+			unsigned long long lookupTimeCompresstionDelay = hashmap.getTotalCompresstionDelayNS();
 
 			// insert
+			hashmap.resetCompresstionDelay();
 			auto startInsert = std::chrono::high_resolution_clock::now();
 			for (size_t i = 0; i < numElements; ++i) {
 				hashmap[static_cast<int>(i)] = static_cast<int>(i * 2);
 			}
 			auto endInsert = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<double> insertTime = endInsert - startInsert;
+			unsigned long long insertTimeCompresstionDelay = hashmap.getTotalCompresstionDelayNS();
+
 
 			if (teirCount == 4) {
-				avgInsertThroughput += static_cast<double>(numElements) / insertTime.count();
-				avgLookupThroughput += static_cast<double>(numElements) / lookupTime.count();
-				avgCompressionRatio += static_cast<double>(compressedSize) / static_cast<double>(originalSize);
+				avgInsertThroughput += static_cast<double>(numElements) / (insertTime.count() + (double)insertTimeCompresstionDelay/1000000000.);
+				avgLookupThroughput += static_cast<double>(numElements) / (lookupTime.count() + (double)lookupTimeCompresstionDelay/1000000000.);
+				avgCompressionRatio += 1 - (static_cast<double>(compressedSize) / static_cast<double>(originalSize));
 				avgLoadFactor += loadFactor;
 				count += 1;
 			}
