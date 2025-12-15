@@ -25,7 +25,7 @@ fig, axes = plt.subplots(2, 1, figsize=(11, 8), sharex=True)
 # Add shared Y-axis labels
 fig.text(0.02, 0.5, "Throughput (M ops/s)", va="center", rotation="vertical",
          fontsize=18, fontweight="bold")
-fig.text(0.96, 0.5, "Memory Space Saving", va="center", rotation=-90,
+fig.text(0.96, 0.5, "Measured Memory Space Saving", va="center", rotation=-90,
          fontsize=18, fontweight="bold")
 
 # Collect all data for consistent axis limits

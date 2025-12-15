@@ -25,7 +25,7 @@ fig, axes = plt.subplots(2, 1, figsize=(11, 8), sharex=True)
 # Add shared Y-axis labels
 fig.text(0.02, 0.5, "Throughput (M ops/s)", va="center", rotation="vertical",
          fontsize=18, fontweight="bold")
-fig.text(0.96, 0.5, "Compressed/Uncompressed", va="center", rotation=-90,
+fig.text(0.96, 0.5, "Compression Ratio", va="center", rotation=-90,
          fontsize=18, fontweight="bold")
 
 # Collect all data for consistent axis limits
@@ -64,7 +64,7 @@ for idx, (filepath, block_size) in enumerate(data_files):
     # Plot memory saving on right axis
     ax2 = ax1.twinx()
     l3 = ax2.plot(load_factors, memory_saving, '-^', color="green",
-                  label="Compressed/Uncompressed", linewidth=2)
+                  label="Compression Ratio", linewidth=2)
 
     # Store legend lines from first subplot
     if idx == 0:

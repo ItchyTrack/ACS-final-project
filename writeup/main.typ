@@ -37,7 +37,7 @@ All tables share the same hash function. The redistribution of keys across tiers
 The hierarchy exploits the access patterns typical of Cuckoo hashing. Recently inserted keys remain in $T_1$ unless evicted, and frequently accessed keys tend to be found in earlier lookups before searching deeper tables. Since $T_1$ is small—only $t_s$ buckets—it fits entirely in cache and avoids main memory access latency. Subsequent tables grow exponentially: $T_2$ is $t_m$ times larger, $T_3$ is $t_m^2$ times larger, and so on. This exponential growth means that most keys reside in the larger tables which exceed cache capacity and reside in main memory. However, because these tables are sparsely populated during normal operation, they compress efficiently when stored in CXL memory. Each bucket occupies multiple cache lines, so even a single lookup to a large table incurs the cost of fetching a full compression block. By concentrating lookups in the smaller tables, the structure reduces the frequency of these expensive compressed memory accesses.
 
 = Methods <sec:Methods>
-To test the effectiveness of this hash map, I implemented it in C++ @ACSFinalProject. To aid evaluation, I benchmarked my results against those of Zhang, adopting their parameters. The complete list of parameters is:
+To test the effectiveness of this hash map, I implemented it in C++ @ACSFinalProject, executed on an Apple M2 MacBook Air. To aid evaluation, I benchmarked my results against those of Zhang, adopting their parameters. The complete list of parameters is:
 
 #align(center)[*TABLE I*]
 #align(center, table(
