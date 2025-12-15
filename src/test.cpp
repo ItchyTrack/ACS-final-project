@@ -24,7 +24,7 @@ void runTest() {
 	const unsigned long long incSize = 20000;
 
 	std::mt19937 rng(42);
-	for (unsigned long long tableSize = startSize; tableSize <= startSize + incSize*30; tableSize += incSize) {
+	for (unsigned long long tableSize = startSize; tableSize <= startSize + incSize*27; tableSize += incSize) {
 		float avgInsertThroughput = 0;
 		float avgLookupThroughput = 0;
 		float avgCompressionRatio = 0;
@@ -47,6 +47,7 @@ void runTest() {
 			size_t uncompressedSize = hashmap.getUncompressedSize();
 			float loadFactor = hashmap.load_factor();
 			size_t teirCount = hashmap.getTierCount();
+			// std::cout << compressedSize << "/" << uncompressedSize <<"\n";
 
 			const size_t numElements = 10000;
 
@@ -75,7 +76,7 @@ void runTest() {
 			if (teirCount == 4) {
 				avgInsertThroughput += static_cast<double>(numElements) / (insertTime.count() + (double)insertTimeCompresstionDelay/1000000000.);
 				avgLookupThroughput += static_cast<double>(numElements) / (lookupTime.count() + (double)lookupTimeCompresstionDelay/1000000000.);
-				avgCompressionRatio += 1 - (static_cast<double>(compressedSize) / static_cast<double>(uncompressedSize));
+				avgCompressionRatio += (static_cast<double>(compressedSize) / static_cast<double>(uncompressedSize));
 				avgMemorySpaceSaving += 1 - (static_cast<double>(compressedSize) / static_cast<double>(kvSize));
 				avgLoadFactor += loadFactor;
 				count += 1;

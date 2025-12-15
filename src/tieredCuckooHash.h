@@ -10,7 +10,7 @@
 
 #include "lzav.h"
 
-const unsigned int compressionBlockSize = 1024;//4096;//
+const unsigned int compressionBlockSize = 4096;//1024;//
 
 #define doCompresstionDelay true
 #define compresstionDelayAmountNS 200
@@ -110,7 +110,7 @@ public:
 			destroy(index);
 			return tmp;
 		}
-		std::array<std::aligned_storage_t<sizeof(mut_value_type), alignof(mut_value_type)>, BinSize> kvPairs;
+		std::array<std::aligned_storage_t<sizeof(mut_value_type), alignof(mut_value_type)>, BinSize> kvPairs{};
 		std::size_t kvCount = 0;
 	};
 	struct Tier {

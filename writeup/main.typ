@@ -30,16 +30,16 @@ This paper addresses that limitation by restructuring the Cuckoo hash table itse
 We describe the design of the Tiered Cuckoo Hash Map and experimentally evaluate its lookup throughput, insertion throughput, load factor, and compression behavior relative to prior compression-aware Cuckoo hashing designs.
 = Design <sec:Design>
 
-The Tiered Cuckoo Hash Map organizes data across a sequence of tables $T_1,...,T_n$, where each table $T_i$ has size $t_s dot t_m^(i-1)$. Insertions begin at $T_1$ and follow standard cuckoo hashing within that table. When all candidate buckets in $T_1$ are full, an existing entry is evicted and reinserted into $T_2$. This eviction process continues through the tiers, with displaced entries moving from $T_i$ to $T_(i+1)$ until a placement succeeds. When an entry is displaced from $T_n$, it cycles back to $T_1$, maintaining a continuous eviction chain across all tables.
+The Tiered Cuckoo Hash Map organizes data across a sequence of tables $T_1,...,T_n$, where each table $T_i$ has size $t_s dot t_m^(i-1)$ (refer to TABLE I for symbols). Insertions begin at $T_1$ and follow standard cuckoo hashing within that table. When all candidate buckets in $T_1$ are full, an existing entry is evicted and reinserted into $T_2$. This eviction process continues through the tiers, with displaced entries moving from $T_i$ to $T_(i+1)$ until a placement succeeds. When an entry is displaced from $T_n$, it cycles back to $T_1$, maintaining a continuous eviction chain across all tables.
 
 All tables share the same hash function. The redistribution of keys across tiers occurs naturally because each table has a different size: hashing a key produces the same value, but taking that value modulo a larger table size yields a different bucket index. This eliminates the need to compute multiple hash functions or maintain separate hash state for each tier. When the structure approaches its load threshold, it scales by adding a new table $T_(n+1)$ of size $t_s dot t_m^n$ rather than rehashing existing entries. The new table is initially empty and sparse, making it highly compressible in hardware-compressed memory.
 
 The hierarchy exploits the access patterns typical of cuckoo hashing. Recently inserted keys remain in $T_1$ unless evicted, and frequently accessed keys tend to be found in earlier lookups before searching deeper tables. Since $T_1$ is small—only $t_s$ buckets—it fits entirely in cache and avoids main memory access latency. Subsequent tables grow exponentially: $T_2$ is $t_m$ times larger, $T_3$ is $t_m^2$ times larger, and so on. This exponential growth means that most keys reside in the larger tables which exceed cache capacity and reside in main memory. However, because these tables are sparsely populated during normal operation, they compress efficiently when stored in CXL memory. Each bucket occupies multiple cache lines, so even a single lookup to a large table incurs the cost of fetching a full compression block. By concentrating lookups in the smaller tables, the structure reduces the frequency of these expensive compressed memory accesses.
 
-#colbreak()
 = Methods <sec:Methods>
 To test the effectiveness of this hash map, I implemented it in C++ @ACSFinalProject. This object was created with predefined parameters, and I used data that could be read. To aid evaluation I benchmarked my results against those of Zhang, adopting their parameters. The complete list of parameters is:
 
+#align(center)[*TABLE I*]
 #align(center, table(
 	align: left,
 	columns: 3,
@@ -67,12 +67,29 @@ To evaluate compression behavior, each table was divided into fixed-size memory 
 
 To simulate the latency penalty of accessing compressed memory, I added 200 nanoseconds to the measured time whenever the benchmark accessed a memory block expected to be stored in compressed form. This penalty reflects the additional time required to decompress a block on a CXL memory access compared to reading from standard DRAM. Blocks were considered compressed if they resided in tables large enough to exceed typical cache sizes, specifically $T_4$. Smaller tables $T_1$, $T_3$ and $T_2$ were assumed to remain cache-resident and uncompressed during normal operation, incurring no additional latency penalty.
 
-= Conclusion <sec:Conclusion>
-#pagebreak()
+= Results <sec:Results>
+The Tiered Cuckoo Hash Map achieves insert throughput between 2.231 and 1.586 M ops/s across load factors from 0.11 to 0.61, with lookup throughput ranging from 30.670 to 5.369 M ops/s over the same interval. Peak performance occurs at low load factors and performance degrades as load factor increases. Compression block size has minimal impact on throughput.
 
-My simulated performance for a Tiered Cuckoo.
+The compression ratio, shown in Figure 1, increases linearly with load factor, rising from approximately 0.25 at a load factor of 0.11 to 0.65 at a load factor of 0.61. This trend indicates that as the hash map fills, the compressed size grows proportionally to the amount of data stored, approaching the size of the uncompressed structure. The compression ratio measures the size of the compressed tables divided by their uncompressed size: a ratio of 0.25 means the compressed data occupies 25% of the original space, while a ratio of 0.65 means it occupies 65%. Both 1 KB and 4 KB compression blocks follow nearly identical trajectories, with 4 KB blocks compressing marginally better throughout the load factor range.
+
 #image("imgs/tieredMapMemRatio.png")
-#image("imgs/tieredMapMemSaving.png")
+#align(center, move([Fig. 1. Tiered Cuckoo load factor vs compression ratio], dy: -4pt))
 
+#box()[#image("imgs/tieredMapMemSaving.png")
+#align(center, move([Fig. 2. Tiered Cuckoo load factor vs memory savings], dy: -4pt))]
 Zhang's performance for a regular cuckoo map.
-#image("imgs/TeresaZhangData.png")
+#box()[#image("imgs/TeresaZhangData.png")
+#align(center, move([Fig. 3. Zhang's Cuckoo load factor vs memory savings @11224718], dy: -4pt))]
+
+Figure 2 presents memory space savings, described in Zhang's paper it is calculated as  $1 - (text("compressed size") / text("KV data size"))$, where KV data size refers only to the 64 bytes per key-value pair without any metadata or bucket overhead. Negative values indicate that the compressed hash map structure exceeds the size of the raw key-value data alone. At low load factors, memory space savings are deeply negative, reaching approximately -0.9, meaning the compressed structure is 1.9 times larger than the raw data. As load factor increases to 0.61, savings improve to approximately -0.05, indicating the compressed structure is only 5% larger than the raw data size. This improvement occurs because bucket metadata and padding constitute a smaller fraction of total memory as more entries fill the available space.
+
+The negative memory savings do not indicate compression failure. Instead, they reflect the overhead inherent in maintaining bucket structures with metadata and alignment padding. Each bucket stores 5 key-value pairs plus metadata, and buckets must align to compression block boundaries. At low load factors, most buckets are partially empty, so metadata overhead dominates. The 56 bytes of value data in each key-value pair were filled with uniformly random bytes during testing, which are effectively incompressible. Therefore, the compression algorithm can only reduce the size of empty bucket slots and metadata, not the actual key-value data itself. As the hash map fills and fewer empty slots remain, the ratio of compressed structure size to raw data size approaches 1.0, causing memory space savings to approach zero.
+
+Comparing these results to Zhang's blocked cuckoo hashing shown in Figure 3, the memory behavior differs substantially. Zhang's approach achieves positive memory space savings, ranging from near 0% at low load factors to approximately 25-40% at higher load factors. This indicates Zhang's compressed structure is smaller than the raw key-value data size, suggesting their implementation either compresses the data itself. The Tiered Cuckoo Hash Map prioritizes a different design goal: concentrating recently accessed entries in small, cache-resident tables while allowing larger, sparser tables to benefit from hardware compression. This structure reduces the number of compressed memory block fetches during typical lookup operations, trading higher metadata overhead for fewer expensive decompression events.
+
+= Conclusion <sec:Conclusion>
+The experimental evaluation demonstrates that the Tiered Cuckoo Hash Map maintains stable insert throughput across a wide range of load factors while lookup throughput degrades predictably as the structure fills. The compression ratios achieved range from 0.25 to 0.65, indicating the structure compresses to 25-65% of its uncompressed size by exploiting sparsity in the larger tables. This compression behavior is effective given that the 56 bytes of value data in each entry consist of uniformly random bytes that cannot be compressed at all.
+
+The comparison to Zhang's results reveals a limitation in the evaluation methodology. The test data used incompressible random values while Zhang assumed compressible data. Future work should evaluate using compressible datasets to measure whether the tiered structure provides additional compression benefits beyond metadata reduction.
+
+The primary challenge is lookup latency when keys reside in larger tables. As load factor increases and more keys propagate to the back tables, lookup throughput degrades from because the structure must check each tier sequentially. Individual lookups that miss the front tables incur the full cost of searching through multiple compressed blocks.

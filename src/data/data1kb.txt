@@ -1,135 +1,135 @@
-Insert throughput: 2.20056e+06 ops/s
-Lookup throughput: 2.81716e+07 ops/s
-Compression ratio: 0.766626
+Insert throughput: 2.23123e+06 ops/s
+Lookup throughput: 3.06701e+07 ops/s
+Compression ratio: 0.233374
 Memory Space Saving: -1.02646
 Load factor: 0.115163
-Insert throughput: 2.17298e+06 ops/s
-Lookup throughput: 2.55763e+07 ops/s
-Compression ratio: 0.764759
+Insert throughput: 2.07884e+06 ops/s
+Lookup throughput: 2.42786e+07 ops/s
+Compression ratio: 0.235241
 Memory Space Saving: -0.751268
 Load factor: 0.134326
-Insert throughput: 2.13978e+06 ops/s
-Lookup throughput: 2.32161e+07 ops/s
-Compression ratio: 0.760832
+Insert throughput: 2.16832e+06 ops/s
+Lookup throughput: 2.22411e+07 ops/s
+Compression ratio: 0.239168
 Memory Space Saving: -0.557288
 Load factor: 0.15358
-Insert throughput: 2.06089e+06 ops/s
-Lookup throughput: 1.86879e+07 ops/s
-Compression ratio: 0.754279
+Insert throughput: 2.0921e+06 ops/s
+Lookup throughput: 1.94071e+07 ops/s
+Compression ratio: 0.245721
 Memory Space Saving: -0.422832
 Load factor: 0.172699
-Insert throughput: 1.9609e+06 ops/s
-Lookup throughput: 1.57551e+07 ops/s
-Compression ratio: 0.743829
+Insert throughput: 1.98121e+06 ops/s
+Lookup throughput: 1.59838e+07 ops/s
+Compression ratio: 0.256171
 Memory Space Saving: -0.334671
 Load factor: 0.191936
-Insert throughput: 1.92221e+06 ops/s
-Lookup throughput: 1.33659e+07 ops/s
-Compression ratio: 0.730958
+Insert throughput: 1.94524e+06 ops/s
+Lookup throughput: 1.38666e+07 ops/s
+Compression ratio: 0.269042
 Memory Space Saving: -0.274812
 Load factor: 0.211045
-Insert throughput: 1.84564e+06 ops/s
-Lookup throughput: 1.15713e+07 ops/s
-Compression ratio: 0.715888
+Insert throughput: 1.88473e+06 ops/s
+Lookup throughput: 1.24013e+07 ops/s
+Compression ratio: 0.284112
 Memory Space Saving: -0.233543
 Load factor: 0.230322
-Insert throughput: 1.8154e+06 ops/s
-Lookup throughput: 1.05228e+07 ops/s
-Compression ratio: 0.699569
+Insert throughput: 1.84701e+06 ops/s
+Lookup throughput: 1.07209e+07 ops/s
+Compression ratio: 0.300431
 Memory Space Saving: -0.205493
 Load factor: 0.249218
-Insert throughput: 1.78094e+06 ops/s
-Lookup throughput: 9.63065e+06 ops/s
-Compression ratio: 0.6817
+Insert throughput: 1.78807e+06 ops/s
+Lookup throughput: 9.89211e+06 ops/s
+Compression ratio: 0.3183
 Memory Space Saving: -0.185152
 Load factor: 0.268573
-Insert throughput: 1.73175e+06 ops/s
-Lookup throughput: 8.53316e+06 ops/s
-Compression ratio: 0.663231
+Insert throughput: 1.76973e+06 ops/s
+Lookup throughput: 9.00199e+06 ops/s
+Compression ratio: 0.336769
 Memory Space Saving: -0.170049
 Load factor: 0.287825
-Insert throughput: 1.66068e+06 ops/s
-Lookup throughput: 7.6952e+06 ops/s
-Compression ratio: 0.644647
+Insert throughput: 1.76176e+06 ops/s
+Lookup throughput: 8.77843e+06 ops/s
+Compression ratio: 0.355353
 Memory Space Saving: -0.158137
 Load factor: 0.306831
-Insert throughput: 1.63636e+06 ops/s
-Lookup throughput: 7.16398e+06 ops/s
-Compression ratio: 0.625406
+Insert throughput: 1.73215e+06 ops/s
+Lookup throughput: 7.82558e+06 ops/s
+Compression ratio: 0.374594
 Memory Space Saving: -0.148058
 Load factor: 0.326285
-Insert throughput: 1.64002e+06 ops/s
-Lookup throughput: 7.22248e+06 ops/s
-Compression ratio: 0.606605
+Insert throughput: 1.73654e+06 ops/s
+Lookup throughput: 7.73869e+06 ops/s
+Compression ratio: 0.393395
 Memory Space Saving: -0.139596
 Load factor: 0.345206
-Insert throughput: 1.63475e+06 ops/s
-Lookup throughput: 6.72775e+06 ops/s
-Compression ratio: 0.587314
+Insert throughput: 1.72154e+06 ops/s
+Lookup throughput: 7.45211e+06 ops/s
+Compression ratio: 0.412686
 Memory Space Saving: -0.131861
 Load factor: 0.364608
-Insert throughput: 1.64847e+06 ops/s
-Lookup throughput: 6.53857e+06 ops/s
-Compression ratio: 0.568196
+Insert throughput: 1.71152e+06 ops/s
+Lookup throughput: 7.05852e+06 ops/s
+Compression ratio: 0.431804
 Memory Space Saving: -0.124575
 Load factor: 0.383971
-Insert throughput: 1.60196e+06 ops/s
-Lookup throughput: 6.4056e+06 ops/s
-Compression ratio: 0.54965
+Insert throughput: 1.68718e+06 ops/s
+Lookup throughput: 6.72876e+06 ops/s
+Compression ratio: 0.45035
 Memory Space Saving: -0.118074
 Load factor: 0.402791
-Insert throughput: 1.60587e+06 ops/s
-Lookup throughput: 6.16283e+06 ops/s
-Compression ratio: 0.530545
+Insert throughput: 1.67636e+06 ops/s
+Lookup throughput: 6.5211e+06 ops/s
+Compression ratio: 0.469455
 Memory Space Saving: -0.111876
 Load factor: 0.422219
-Insert throughput: 1.57303e+06 ops/s
-Lookup throughput: 5.98731e+06 ops/s
-Compression ratio: 0.511779
+Insert throughput: 1.66609e+06 ops/s
+Lookup throughput: 6.31586e+06 ops/s
+Compression ratio: 0.488221
 Memory Space Saving: -0.106128
 Load factor: 0.441379
-Insert throughput: 1.62988e+06 ops/s
-Lookup throughput: 6.09344e+06 ops/s
-Compression ratio: 0.493373
+Insert throughput: 1.65423e+06 ops/s
+Lookup throughput: 6.13042e+06 ops/s
+Compression ratio: 0.506627
 Memory Space Saving: -0.10086
 Load factor: 0.46021
-Insert throughput: 1.6269e+06 ops/s
-Lookup throughput: 5.96262e+06 ops/s
-Compression ratio: 0.474321
+Insert throughput: 1.65042e+06 ops/s
+Lookup throughput: 5.94199e+06 ops/s
+Compression ratio: 0.525679
 Memory Space Saving: -0.0956507
 Load factor: 0.479787
-Insert throughput: 1.6009e+06 ops/s
-Lookup throughput: 5.7831e+06 ops/s
-Compression ratio: 0.455731
+Insert throughput: 1.63928e+06 ops/s
+Lookup throughput: 5.8563e+06 ops/s
+Compression ratio: 0.544269
 Memory Space Saving: -0.0906913
 Load factor: 0.499013
-Insert throughput: 1.56835e+06 ops/s
-Lookup throughput: 5.56694e+06 ops/s
-Compression ratio: 0.437479
+Insert throughput: 1.63485e+06 ops/s
+Lookup throughput: 5.72117e+06 ops/s
+Compression ratio: 0.562521
 Memory Space Saving: -0.0858358
 Load factor: 0.518054
-Insert throughput: 1.56409e+06 ops/s
-Lookup throughput: 5.39547e+06 ops/s
-Compression ratio: 0.419233
+Insert throughput: 1.61902e+06 ops/s
+Lookup throughput: 5.57591e+06 ops/s
+Compression ratio: 0.580767
 Memory Space Saving: -0.081145
 Load factor: 0.537178
-Insert throughput: 1.56632e+06 ops/s
-Lookup throughput: 5.33328e+06 ops/s
-Compression ratio: 0.401121
+Insert throughput: 1.60967e+06 ops/s
+Lookup throughput: 5.47177e+06 ops/s
+Compression ratio: 0.598879
 Memory Space Saving: -0.0767293
 Load factor: 0.556202
-Insert throughput: 1.52893e+06 ops/s
-Lookup throughput: 5.24956e+06 ops/s
-Compression ratio: 0.38264
+Insert throughput: 1.59914e+06 ops/s
+Lookup throughput: 5.42127e+06 ops/s
+Compression ratio: 0.61736
 Memory Space Saving: -0.0724944
 Load factor: 0.57563
-Insert throughput: 1.55759e+06 ops/s
-Lookup throughput: 5.23748e+06 ops/s
-Compression ratio: 0.364627
+Insert throughput: 1.58615e+06 ops/s
+Lookup throughput: 5.28489e+06 ops/s
+Compression ratio: 0.635373
 Memory Space Saving: -0.0685155
 Load factor: 0.594632
-Insert throughput: 1.53357e+06 ops/s
-Lookup throughput: 5.25392e+06 ops/s
-Compression ratio: 0.346245
+Insert throughput: 1.58651e+06 ops/s
+Lookup throughput: 5.36929e+06 ops/s
+Compression ratio: 0.653755
 Memory Space Saving: -0.064583
 Load factor: 0.614095
