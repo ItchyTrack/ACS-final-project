@@ -11,7 +11,7 @@
 		// department: [],
 		// organization: [Typst GmbH],
 		location: [Troy, New York],
-		email: "benherman345@gmail.com"
+		email: "hermab3@rpi.edu"
 		),
 	),
 	// index-terms: ("Scientific writing", "Typesetting", "Document creation", "Syntax"),
